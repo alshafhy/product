@@ -51,6 +51,7 @@
         <h2 class="mb-1">سيتم اطلاق الموقع قريبا 🚀</h2>
         {{-- <p class="mb-3">We're creating something awesome. Please subscribe to get notified when it's ready!</p> --}}
         <p class="mb-3">جارى العمل على تطوير الموقع وسيتم الانتهاء منه قريبا بإذن الله</p>
+        <a href="{{ route('login') }}" class="btn btn-primary">{{ __('Login') }}</a>
         {{-- <form class="row row-cols-md-auto row justify-content-center align-items-center m-0 mb-2 gx-3"
           action="javascript:void(0)">
           <div class="col-12 m-0 mb-1">

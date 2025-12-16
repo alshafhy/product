@@ -100,8 +100,8 @@
                         <!-- Login-->
                         <div class="d-flex col-lg-4 align-items-center auth-bg px-2 p-lg-5">
                             <div class="col-12 col-sm-8 col-md-6 col-lg-12 px-xl-2 mx-auto">
-                                <img src="{{ asset('/images/logo/main_logo.jpeg') }}"
-                                    style="width: 100%; height:100%;" />
+                                <!-- <img src="{{ asset('/images/logo/main_logo.jpeg') }}"
+                                    style="width: 100%; height:100%;" /> -->
                                 <br><br>
                                 {{-- <h2 class="card-title fw-bold mb-1">مرحبا بك فى نظام شركة تجريبيه 👋</h2>
                                 --}}
@@ -119,10 +119,10 @@
                                     <img class="img-fluid" src="{{asset('images/pages/login-v2-dark.svg')}}"
                                         alt="Login V2" />
                                 @else
-                                    {{-- <img class="img-fluid" src="{{asset('images/pages/login-v2.svg')}}"
-                                        alt="Login V2" /> --}}
-                                    <img style="max-width: 70%" class="img-fluid"
-                                        src="{{asset('images/login/work-orders-home-one.png')}}" alt="Login V2" />
+                                     <img class="img-fluid" src="{{asset('images/pages/login-v2.svg')}}"
+                                        alt="Login V2" /> 
+                                    <!-- <img style="max-width: 70%" class="img-fluid"
+                                        src="{{asset('images/login/work-orders-home-one.png')}}" alt="Login V2" /> -->
                                     {{-- <img class="img-fluid" src="{{asset('images/login/work-orders-home-two.png')}}"
                                         alt="Login V2" /> --}}
                                 @endif
