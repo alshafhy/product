@@ -1,0 +1,41 @@
+<?php
+
+namespace $NAMESPACE_DATATABLES$;
+
+use $NAMESPACE_MODEL$\$MODEL_NAME$;
+use App\DataTables\AppDataTable;
+use Yajra\DataTables\Html\Column;
+
+class $MODEL_NAME$DataTable extends AppDataTable
+{
+
+
+    function __construct() {
+        $this->dataTableName = '$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$';
+        $this->actionViewBlade = '$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.datatables_actions';
+    }
+
+    /**
+     * Get query source of dataTable.
+     *
+     * @param \App\Models\$MODEL_NAME$ $model
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function query($MODEL_NAME$ $model)
+    {
+        return $model->newQuery();
+    }
+
+    /**
+     * Get columns.
+     *
+     * @return array
+     */
+    protected function getColumns()
+    {
+        return [
+            $DATATABLE_COLUMNS$
+        ];
+    }
+
+}

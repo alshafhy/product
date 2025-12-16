@@ -1,0 +1,1 @@
+<x-datatable-actions :screenName="collect(explode('.',Route::currentRouteName()))->first()" :rowID="$id" :buttons="['show','edit']"></x-datatable-actions>

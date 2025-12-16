@@ -1,0 +1,6 @@
+<li class="nav-item  {{Route::currentRouteName() === '$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index' ? 'active' : ''}}">
+  <a href="{{ route('$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$.index') }}" class="d-flex align-items-center" >
+    <i data-feather="file"></i>
+    <span class="menu-title text-truncate">@lang('models/$MODEL_NAME_PLURAL_CAMEL$.plural')</span>
+  </a>
+</li>

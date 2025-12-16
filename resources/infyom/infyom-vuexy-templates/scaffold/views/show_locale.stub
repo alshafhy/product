@@ -1,0 +1,22 @@
+@extends('layouts.app')
+
+@section('title', __('models/$MODEL_NAME_PLURAL_CAMEL$.plural'))
+
+@section('breadcrumbs', __('models/$MODEL_NAME_PLURAL_CAMEL$.plural'))
+
+@section('content')
+
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">{{  __('models/$MODEL_NAME_PLURAL_CAMEL$.plural') }} - @lang('crud.show')  </h4>
+                @include('layouts.partials.form_toolbar', ['screen_name' => '$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$','action_name' => 'show'])
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @include('$VIEW_PREFIX$$MODEL_NAME_PLURAL_SNAKE$.show_fields')
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection

@@ -1,0 +1,1 @@
+@include('layouts.partials.datatables_actions', ['screen_name' => '$ROUTE_NAMED_PREFIX$$MODEL_NAME_PLURAL_CAMEL$'])

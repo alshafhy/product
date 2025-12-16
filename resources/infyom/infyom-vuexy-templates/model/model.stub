@@ -1,0 +1,63 @@
+<?php
+
+namespace $NAMESPACE_MODEL$;
+
+use $NAMESPACE_MODEL_EXTEND$ as Model;
+$SOFT_DELETE_IMPORT$
+$HAS_FACTORY_IMPORT$
+
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+$DOCS$
+class $MODEL_NAME$ extends AppBaseModel
+{
+use LogsActivity;
+$SOFT_DELETE$
+$HAS_FACTORY$
+    public $table = '$TABLE_NAME$';
+    $TIMESTAMPS$
+$SOFT_DELETE_DATES$
+$CONNECTION$
+$PRIMARY$
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('$MODEL_NAME$')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logAll();
+    }
+
+    public $fillable = [
+        $FIELDS$
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        $CAST$
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        $RULES$
+    ];
+
+    $RELATIONS$
+
+
+
+    public function activities(){
+        return $this->hasMany(Activity::class,'subject_id','id')->where(['subject_type'=>'$NAMESPACE_MODEL$\$MODEL_NAME$']);
+    }
+}

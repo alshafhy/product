@@ -1,0 +1,28 @@
+<form action="" id="search_data" method="post">
+    @csrf
+    <x-report.electric-tower-orders-filter></x-report.electric-tower-orders-filter>
+    {{-- <div class="mb-1">
+      <label class="form-label" for="payment-date">Payment Date</label>
+      <input id="payment-date" class="form-control date-picker" type="text" />
+    </div>
+    <div class="mb-1">
+      <label class="form-label" for="payment-method">Payment Method</label>
+      <select class="form-select" id="payment-method">
+        <option value="" selected disabled>Select payment method</option>
+        <option value="Cash">Cash</option>
+        <option value="Bank Transfer">Bank Transfer</option>
+        <option value="Debit">Debit</option>
+        <option value="Credit">Credit</option>
+        <option value="Paypal">Paypal</option>
+      </select>
+    </div>
+    <div class="mb-1">
+      <label class="form-label" for="payment-note">Internal Payment Note</label>
+      <textarea class="form-control" id="payment-note" rows="5" placeholder="Internal Payment Note"></textarea>
+    </div> --}}
+    <div class="d-flex flex-wrap mb-0">
+        {{-- <button type="button" class="btn btn-primary me-1" data-bs-dismiss="modal">Send</button> --}}
+        <button id="searchButton" class="btn btn-outline-primary me-1" type="button"> @lang('crud.doSearch') </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"> @lang('crud.cancel')</button>
+    </div>
+</form>

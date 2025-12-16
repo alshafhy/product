@@ -1,0 +1,49 @@
+{
+  "menu": [
+    {
+      "url": "generator_builder",
+      "name": "locale.generator_builder",
+      "icon": "settings",
+      "slug": "generator_builder"
+    },
+    {
+      "url": "systemManagement/systemComponents",
+      "name": "system-components",
+      "icon": "settings",
+      "slug": "system-components"
+    },
+    {
+      "url": "log-viewer",
+      "name": "locale.log-viewer",
+      "icon": "settings",
+      "slug": "log-viewer"
+    },
+    {
+      "url": "send_notifications",
+      "name": "locale.send_notifications",
+      "icon": "settings",
+      "slug": "send-notifications"
+    }
+    ,
+    {
+      "url": "systemReleases",
+      "name": "locale.systemReleases",
+      "icon": "settings",
+      "slug": "systemReleases"
+    }
+    ,
+    {
+      "url": "systemReleasesFeatures",
+      "name": "locale.systemReleasesFeatures",
+      "icon": "settings",
+      "slug": "systemReleasesFeatures"
+    },
+    {
+      "url": "workOrderTransactionsHistories",
+      "name": "locale.workOrderTransactionsHistories",
+      "icon": "settings",
+      "slug": "workOrderTransactionsHistories"
+    }
+    
+  ]
+}

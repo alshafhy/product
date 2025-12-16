@@ -1,0 +1,22 @@
+services:
+    template-backend:
+        build:
+            context: ./docker
+            dockerfile: 8.3/Dockerfile
+        image: general/php-8.3
+        container_name: template-backend
+        volumes:
+            - .:/var/www/html
+        ports:
+            - "8023:80"
+        environment:
+            - APP_ENV=local
+            - APP_DEBUG=true
+        networks:
+            - template-network
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
+networks:
+    template-network:
+        driver: bridge

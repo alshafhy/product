@@ -1,0 +1,42 @@
+<?php
+
+return array (
+  'singular' => 'WorkOrder',
+  'plural' => 'WorkOrders',
+  'fields' => 
+  array (
+    'id' => 'Id',
+    'work_order_number' => 'Work Order Number',
+    'reference_number' => 'Reference Number',
+    'received_date' => 'Received Date',
+    'work_type_id' => 'Work Type Id',
+    'branch_id' => 'Branch Id',
+    'city_id' => 'City Id',
+    'district_id' => 'District Id',
+    'x_axis' => 'X Axis',
+    'y_axis' => 'Y Axis',
+    'street_name' => 'Street Name',
+    'customer_number' => 'Customer Number',
+    'customer_name' => 'Customer Name',
+    'electrical_station_number' => 'Electrical Station Number',
+    'electrical_stations_type_id' => 'Electrical Stations Type Id',
+    'work_period' => 'Work Period',
+    'status' => 'Status',
+    'work_orders_stage_id' => 'Work Orders Stage Id',
+    'electricity_department_id' => 'Electricity Department Id',
+    'current_department_id' => 'Current Department Id',
+    'needs_drilling_operations' => 'Needs Drilling Operations',
+    'needs_electrical_work' => 'Needs Electrical Work',
+    'needs_work_orders_permit' => 'Needs Work Orders Permit',
+    'needs_program' => 'Needs Program',
+    'finished_date' => 'Finished Date',
+    'has_asbuilt' => 'Has Asbuilt',
+    'asbuilt_number' => 'Asbuilt Number',
+    'achievement_certificate_id' => 'Achievement Certificate Id',
+    'payment_clearance_id' => 'Payment Clearance Id',
+    'work_orders_type_id' => 'Work Orders Type Id',
+    'created_at' => 'Created At',
+    'updated_at' => 'Updated At',
+    'shareLink' => 'share Link'
+  ),
+);

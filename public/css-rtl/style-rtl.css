@@ -1,0 +1,68 @@
+/*================================================================================
+	Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
+	Version: 2.0
+	Author: PIXINVENT
+	Author URL: http://www.themeforest.net/user/pixinvent
+================================================================================
+
+NOTE:
+------
+PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
+WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+#dataTableBuilder_filter {
+  width: 300px;
+  text-align: right;
+  float: left;
+  align-self: auto;
+}
+
+#dataTableBuilder_filter input {
+  width: 200px;
+  margin-right: 9px;
+  display: inline;
+}
+
+#dataTableBuilder_filter label {
+  text-align: right;
+  margin-right: 0px;
+  margin-top: 0px;
+}
+
+.administrator-work {
+  position: absolute;
+  top: 14px;
+  left: 0px;
+}
+
+.form-group {
+  margin-top: 8px;
+}
+
+.alert {
+  padding: 10px;
+}
+
+.main-menu.menu-light .navigation > li > ul li.has-sub > ul > li {
+  margin: 0 2px;
+}
+
+.main-menu.menu-light .navigation > li ul li ul a {
+  padding: 10px 44px 10px 15px;
+}
+
+.table-bordered > thead, tbody, tfoot, tr, td, th {
+  border-top-width: 1px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.select2-container--default[dir=rtl] .select2-selection--multiple .select2-selection__choice__remove {
+  margin-right: 8px;
+}
+
+.nav-tabs-border {
+  border-bottom: 1px solid #dbdade;
+  border-radius: 0rem;
+  background-color: #fff;
+}

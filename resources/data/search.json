@@ -1,0 +1,94 @@
+{
+  "listItems": [
+    {
+      "name": "الرئيسية",
+      "url": "/",
+      "icon": "home"
+    },
+    {
+      "name": "المدن",
+      "url": "cities",
+      "icon": "file"
+    },
+    {
+      "name": "الأحياء",
+      "url": "districts",
+      "icon": "file"
+    },
+    {
+      "name": "الفروع",
+      "url": "branches",
+      "icon": "file"
+    },
+    {
+      "name": "الإدارات",
+      "url": "departments",
+      "icon": "file"
+    },
+    {
+      "name": "الوظائف",
+      "url": "jobs",
+      "icon": "file"
+    },
+    {
+      "name": "الموظفين",
+      "url": "employees",
+      "icon": "file"
+    },
+    {
+      "name": "أنواع المرفقات",
+      "url": "attachmentTypes",
+      "icon": "file"
+    },
+    {
+      "name": "أقسام ش/الكهرباء",
+      "url": "electricityDepartments",
+      "icon": "file"
+    },
+    {
+      "name": "أنواع العمل ش/الكهرباء",
+      "url": "workTypes",
+      "icon": "file"
+    },
+    {
+      "name": "أنواع",
+      "url": "workOrdersPermitTypes",
+      "icon": "file"
+    },
+    {
+      "name": "أنواع أوامر العمل",
+      "url": "workOrdersTypes",
+      "icon": "file"
+    },
+    {
+      "name": "أنواع محطات الكهرباء",
+      "url": "electricalStationsTypes",
+      "icon": "file"
+    },
+    {
+      "name": "المقاولون",
+      "url": "contractors",
+      "icon": "file"
+    },
+    {
+      "name": "مراحل أوامر العمل",
+      "url": "workOrdersStages",
+      "icon": "file"
+    },
+    {
+      "name": "وحدات الأصناف",
+      "url": "units",
+      "icon": "file"
+    },
+    {
+      "name": "تصنيفات الأصناف",
+      "url": "itemsCategories",
+      "icon": "file"
+    },
+    {
+      "name": "الأصناف",
+      "url": "items",
+      "icon": "file"
+    }
+  ]
+}
