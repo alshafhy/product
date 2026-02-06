@@ -18,6 +18,7 @@
     "infyomlabs/generator-builder": "^1.0",
     "infyomlabs/laravel-generator": "^6.0",
     "kalnoy/nestedset": "^6.0",
+    "laragear/webauthn": "^3.1",
     "laravel/framework": "^10.0",
     "laravel/tinker": "^2.5",
     "laravel/ui": "^4.2",

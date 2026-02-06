@@ -6,10 +6,12 @@
     "watch-poll": "mix watch -- --watch-options-poll=1000",
     "hot": "mix watch --hot",
     "production": "mix --production",
-    "rtl": "cross-env MIX_CONTENT_DIRECTION=rtl mix"
+    "rtl": "cross-env MIX_CONTENT_DIRECTION=rtl mix",
+    "ltr": "cross-env MIX_CONTENT_DIRECTION=ltr mix"
   },
   "dependencies": {
-    "bootstrap": "~5.1.0"
+    "bootstrap": "~5.1.0",
+    "yarn": "^1.22.22"
   },
   "devDependencies": {
     "axios": "^0.21",

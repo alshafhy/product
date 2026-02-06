@@ -14,7 +14,7 @@
 <script src="{{ asset(mix('vendors/js/pickers/flatpickr/flatpickr.min.js')) }}"></script>
 {{-- Form Numbers --}}
 <script src="{{ asset(mix('vendors/js/forms/spinner/jquery.bootstrap-touchspin.js'))}}"></script>
-{{-- Custom  File Input --}}
+{{-- Custom File Input --}}
 <script src="{{ asset(mix('vendors/js/jasny/jasny-bootstrap.min.js'))}}"></script>
 
 @yield('vendor-script')
@@ -27,7 +27,7 @@
 <script src="{{ asset(mix('js/core/scripts.js')) }}"></script>
 
 @if($configData['blankPage'] === false)
-<script src="{{ asset(mix('js/scripts/customizer.js')) }}"></script>
+    <script src="{{ asset(mix('js/scripts/customizer.js')) }}"></script>
 @endif
 
 <!-- select2 init script -->
@@ -45,6 +45,7 @@
 </script>
 
 <script src="{{ asset(mix('js/scripts/crud.js')) }}"></script>
+<script src="{{ asset('js/vendor/webauthn/webauthn.js') }}"></script>
 
 
 <!-- END: Theme JS-->

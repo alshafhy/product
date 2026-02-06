@@ -23,7 +23,7 @@ const path = require('path')
  */
 
 function mixAssetsDir(query, cb) {
-  ;(glob.sync('resources/' + query) || []).forEach(f => {
+  ; (glob.sync('resources/' + query) || []).forEach(f => {
     f = f.replace(/[\\\/]+/g, '/')
     cb(f, f.replace('resources', 'public'))
   })
@@ -66,6 +66,7 @@ mixAssetsDir('fonts', (src, dest) => mix.copy(src, dest))
 mixAssetsDir('fonts/**/**/*.css', (src, dest) => mix.copy(src, dest))
 mix.copyDirectory('resources/images', 'public/images')
 mix.copyDirectory('resources/data', 'public/data')
+mix.copy('resources/js/vendor/webauthn/webauthn.js', 'public/js/vendor/webauthn/webauthn.js')
 
 mix
   .js('resources/js/core/app-menu.js', 'public/js/core')

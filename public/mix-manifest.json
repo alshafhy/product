@@ -586,5 +586,6 @@
     "/data/search-backup.json": "/data/search-backup.json",
     "/data/search.json": "/data/search.json",
     "/data/table-datatable.json": "/data/table-datatable.json",
-    "/data/user-list.json": "/data/user-list.json"
+    "/data/user-list.json": "/data/user-list.json",
+    "/js/vendor/webauthn/webauthn.js": "/js/vendor/webauthn/webauthn.js"
 }

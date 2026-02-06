@@ -10,10 +10,11 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-
-class User extends Authenticatable
+use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
+class User extends Authenticatable implements WebAuthnAuthenticatable
 {
-    use HasFactory, Notifiable, LogsActivity, HasRoles ;
+    use HasFactory, Notifiable, LogsActivity, HasRoles, WebAuthnAuthentication;
 
 
 
@@ -45,7 +46,7 @@ class User extends Authenticatable
         'email' => 'required|email|unique:users'
     ];
 
-    public static $rulesForUpdate =  [
+    public static $rulesForUpdate = [
         'name' => 'required',
         'username' => 'required',
         'email' => 'required|email'
@@ -83,8 +84,9 @@ class User extends Authenticatable
 
 
 
-    public function activities(){
-        return $this->hasMany(Activity::class,'subject_id','id')->where(['subject_type'=>'App\Models\User']);
+    public function activities()
+    {
+        return $this->hasMany(Activity::class, 'subject_id', 'id')->where(['subject_type' => 'App\Models\User']);
     }
 
     /**
