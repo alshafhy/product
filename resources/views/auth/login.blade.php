@@ -91,7 +91,6 @@
 
 @section('page-script')
   <script src="{{asset(mix('js/scripts/pages/auth-login.js'))}}"></script>
-  <script src="{{ asset('js/vendor/webauthn/webauthn.js') }}"></script>
   <script>
     const webauthn = new WebAuthn();
 

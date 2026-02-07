@@ -508,6 +508,7 @@
     "/vendors/js/unison-js/unison-js.min.js": "/vendors/js/unison-js/unison-js.min.js",
     "/vendors/js/vendors.min.js": "/vendors/js/vendors.min.js",
     "/vendors/js/waves/waves.min.js": "/vendors/js/waves/waves.min.js",
+    "/vendors/js/webauthn/webauthn.js": "/vendors/js/webauthn/webauthn.js",
     "/vendors/css/animate/animate.css": "/vendors/css/animate/animate.css",
     "/vendors/css/animate/animate.min.css": "/vendors/css/animate/animate.min.css",
     "/vendors/css/calendars/fullcalendar.min.css": "/vendors/css/calendars/fullcalendar.min.css",
