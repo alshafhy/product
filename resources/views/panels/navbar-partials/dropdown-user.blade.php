@@ -55,8 +55,16 @@
                 alert('Passkey enabled successfully!');
               })
               .catch(error => {
-                console.error(error);
-                alert('Failed to enable passkey. Make sure your device supports it.');
+                console.error('WebAuthn Registration Error:', error);
+                if (error instanceof Response) {
+                  error.json().then(data => {
+                    console.error('WebAuthn Registration API Error Details:', data);
+                    alert('Error: ' + (data.message || data.error || 'Unknown API error during registration.'));
+                  });
+                } else {
+                  console.error('WebAuthn Registration Client-side Error:', error);
+                  alert('Failed to enable passkey. Make sure your device supports it and you are on a secure connection (HTTPS).');
+                }
               });
           });
         }

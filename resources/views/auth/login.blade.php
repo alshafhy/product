@@ -117,8 +117,16 @@
           window.location.href = '/home';
         })
         .catch(error => {
-          console.error(error);
-          alert('WebAuthn login failed. Please ensure you have registered this device.');
+          console.error('WebAuthn Login Error:', error);
+          if (error instanceof Response) {
+            error.json().then(data => {
+              console.error('WebAuthn Login API Error Details:', data);
+              alert('Error: ' + (data.message || data.error || 'Unknown API error during login. Check console for details.'));
+            });
+          } else {
+            console.error('WebAuthn Login Client-side Error:', error);
+            alert('WebAuthn login failed. Please ensure you have registered this device and your browser supports passkeys. Check console for details.');
+          }
         });
     });
   </script>
