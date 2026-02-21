@@ -10,6 +10,7 @@ use App\Http\Controllers\StaterkitController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AssayServiceController;
 use App\Http\Controllers\NotificationController;
+use Laragear\WebAuthn\Http\Routes as WebAuthn;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,7 +30,7 @@ Auth::routes();
 Route::get('testupload', function () {
     Storage::disk('google')->put('test.txt', 'Hello World');
 });
-
+WebAuthn::register();
 
 Route::group([
     'middleware' => 'auth'

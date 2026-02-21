@@ -45,7 +45,7 @@ class User extends Authenticatable
         'email' => 'required|email|unique:users'
     ];
 
-    public static $rulesForUpdate =  [
+    public static $rulesForUpdate = [
         'name' => 'required',
         'username' => 'required',
         'email' => 'required|email'
@@ -83,8 +83,9 @@ class User extends Authenticatable
 
 
 
-    public function activities(){
-        return $this->hasMany(Activity::class,'subject_id','id')->where(['subject_type'=>'App\Models\User']);
+    public function activities()
+    {
+        return $this->hasMany(Activity::class, 'subject_id', 'id')->where(['subject_type' => 'App\Models\User']);
     }
 
     /**
