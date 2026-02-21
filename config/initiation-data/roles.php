@@ -2,6 +2,11 @@
 
 return [
     '1' => [
+        'name' => 'admin',
+        'guard_name' => 'web',
+        'ar_name' => 'Admin',
+    ],
+    '2' => [
         'name' => 'webmaster',
         'guard_name' => 'web',
         'ar_name' => 'Webmaster',

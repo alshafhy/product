@@ -18,14 +18,14 @@ class RolesSeeder extends Seeder
         $roles = config('initiation-data.roles');
         //
         foreach ($roles as $role) {
-            $roleData = Role::create([
-                'name' => $role['name'] ,
-                'guard_name' => $role['guard_name'] ,
-                'ar_name' => $role['ar_name'] ,
-                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
-            ]);
-
+            $roleData = Role::firstOrCreate(
+                ['name' => $role['name'], 'guard_name' => $role['guard_name']],
+                [
+                    'ar_name' => $role['ar_name'],
+                    'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                    'updated_at' => Carbon::now()->format('Y-m-d H:i:s')
+                ]
+            );
         }
     }
 }
