@@ -37,13 +37,15 @@ class DemoUserSeeder extends Seeder
             } else {
                 $password = Hash::make($user['username'] . "@demo");
             }
-            $userData = User::create([
-                'name' => $user['name'],
-                'username' => $user['username'],
-                'email' => $user['email'],
-                'password' => $password,
-                'remember_token' => null
-            ]);
+            $userData = User::updateOrCreate(
+                ['username' => $user['username']],
+                [
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'password' => $password,
+                    'remember_token' => null
+                ]
+            );
             if (isset($user['role']) && $user['role']) {
                 $userData->assignRole($user['role']);
             }

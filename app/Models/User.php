@@ -10,11 +10,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laragear\WebAuthn\WebAuthnAuthentication;
-use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
-class User extends Authenticatable implements WebAuthnAuthenticatable
+use Laravel\Sanctum\HasApiTokens;
+class User extends Authenticatable
 {
-    use HasFactory, Notifiable, LogsActivity, HasRoles, WebAuthnAuthentication;
+    use HasFactory, Notifiable, LogsActivity, HasRoles,HasApiTokens ;
 
 
 
