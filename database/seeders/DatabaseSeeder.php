@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             PeopleSeeder::class,
             SaleInvoicePermissionsSeeder::class,
             PurchaseInvoicePermissionsSeeder::class,
+            TreasuryPermissionsSeeder::class,
         ]);
     }
 }
