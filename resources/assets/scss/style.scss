@@ -77,6 +77,18 @@ html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-expanded .main-menu u
     opacity: 1 !important;
 }
 
+// RTL: Move expand arrow to left side and flip direction (→ becomes ←)
+html[dir="rtl"] .vertical-layout.vertical-menu-modern .main-menu .navigation li.has-sub > a:after {
+    right: auto !important;
+    left: 20px !important;
+    transform: rotate(180deg) !important;
+}
+
+// When submenu is open: point downward
+html[dir="rtl"] .vertical-layout.vertical-menu-modern .main-menu .navigation li.has-sub.open:not(.menu-item-closing) > a:after {
+    transform: rotate(270deg) !important;
+}
+
 // Mobile: RTL menu slides off to the right (not left)
 @media (max-width: 767.98px) {
     html[dir="rtl"] .main-menu {
