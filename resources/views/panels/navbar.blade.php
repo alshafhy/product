@@ -64,7 +64,101 @@
     @include('panels/navbar-partials/dropdown-notification')
     {{-- @include('panels/navbar-partials/dropdown-cart') --}}
     @include('panels/navbar-partials/search')
-    {{-- @include('panels/navbar-partials/dropdown-lang') --}}
+    {{-- Language & Direction Switcher --}}
+    <div class="dropdown d-inline-block ms-2">
+    
+        {{-- Toggle Button --}}
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
+                type="button"
+                id="langDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                title="{{ __('layout.language_direction') }}">
+    
+            {{-- Flag + current locale label --}}
+            @if(($currentLocale ?? 'ar') === 'ar')
+                <span class="fi fi-eg" style="width:20px;height:14px;">🇪🇬</span>
+                <span class="fw-semibold">AR</span>
+                <span class="badge bg-primary ms-1" style="font-size:10px;">RTL</span>
+            @else
+                <span class="fi fi-gb" style="width:20px;height:14px;">🇬🇧</span>
+                <span class="fw-semibold">EN</span>
+                <span class="badge bg-secondary ms-1" style="font-size:10px;">LTR</span>
+            @endif
+    
+        </button>
+    
+        {{-- Dropdown Menu --}}
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" 
+            aria-labelledby="langDropdown"
+            style="min-width: 200px;">
+    
+            {{-- Header label --}}
+            <li>
+                <h6 class="dropdown-header d-flex align-items-center gap-2">
+                    <i class="bi bi-translate"></i>
+                    {{ __('layout.choose_language') }}
+                </h6>
+            </li>
+            <li><hr class="dropdown-divider my-1"></li>
+    
+            {{-- Arabic RTL option --}}
+            <li>
+                <a class="dropdown-item d-flex align-items-center justify-content-between py-2
+                           {{ ($currentLocale ?? 'ar') === 'ar' ? 'active fw-bold' : '' }}"
+                   href="{{ route('locale.switch', 'ar') }}">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fi fi-eg">🇪🇬</span>
+                        <div>
+                            <div class="fw-semibold">العربية</div>
+                            <small class="text-muted">Arabic</small>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column align-items-end gap-1">
+                        <span class="badge bg-primary" style="font-size:10px;">RTL</span>
+                        @if(($currentLocale ?? 'ar') === 'ar')
+                            <i class="bi bi-check2 text-success"></i>
+                        @endif
+                    </div>
+                </a>
+            </li>
+    
+            {{-- English LTR option --}}
+            <li>
+                <a class="dropdown-item d-flex align-items-center justify-content-between py-2
+                           {{ ($currentLocale ?? 'ar') === 'en' ? 'active fw-bold' : '' }}"
+                   href="{{ route('locale.switch', 'en') }}">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fi fi-gb">🇬🇧</span>
+                        <div>
+                            <div class="fw-semibold">English</div>
+                            <small class="text-muted">الإنجليزية</small>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column align-items-end gap-1">
+                        <span class="badge bg-secondary" style="font-size:10px;">LTR</span>
+                        @if(($currentLocale ?? 'ar') === 'en')
+                            <i class="bi bi-check2 text-success"></i>
+                        @endif
+                    </div>
+                </a>
+            </li>
+    
+            <li><hr class="dropdown-divider my-1"></li>
+    
+            {{-- Direction info row --}}
+            <li class="px-3 py-2">
+                <small class="text-muted d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-left-right"></i>
+                    {{ __('layout.current_direction') }}:
+                    <span class="badge {{ ($currentDir ?? 'rtl') === 'rtl' ? 'bg-primary' : 'bg-secondary' }}">
+                        {{ strtoupper($currentDir ?? 'rtl') }}
+                    </span>
+                </small>
+            </li>
+    
+        </ul>
+    </div>
     @include('panels/navbar-partials/dropdown-user')
     
   </ul>

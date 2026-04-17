@@ -15,4 +15,69 @@
 @import '@/scss/overrides.scss';
 @import '@/assets/scss/style.scss';
 
+// ─── RTL / LTR Direction Switching ───────────────────────
 
+// Sidebar position
+html.rtl .sidebar {
+    right: 0;
+    left: auto;
+    border-left: 1px solid var(--bs-border-color);
+    border-right: none;
+}
+
+html.ltr .sidebar {
+    left: 0;
+    right: auto;
+    border-right: 1px solid var(--bs-border-color);
+    border-left: none;
+}
+
+// Main content offset
+html.rtl .main-content {
+    margin-right: var(--sidebar-width, 260px);
+    margin-left: 0;
+}
+
+html.ltr .main-content {
+    margin-left: var(--sidebar-width, 260px);
+    margin-right: 0;
+}
+
+// Collapsed sidebar offset
+html.rtl.sidebar-collapsed .main-content {
+    margin-right: var(--sidebar-collapsed-width, 60px);
+    margin-left: 0;
+}
+
+html.ltr.sidebar-collapsed .main-content {
+    margin-left: var(--sidebar-collapsed-width, 60px);
+    margin-right: 0;
+}
+
+// Topbar direction
+html.rtl .topbar .dropdown-menu {
+    right: auto;
+    left: 0;
+}
+
+html.ltr .topbar .dropdown-menu {
+    left: auto;
+    right: 0;
+}
+
+// Bootstrap icon flip for chevrons in RTL
+html.rtl .collapse-arrow {
+    transform: rotate(0deg);
+}
+
+html.rtl .collapse-arrow.rotated {
+    transform: rotate(-90deg);
+}
+
+html.ltr .collapse-arrow {
+    transform: rotate(0deg);
+}
+
+// Active badge direction badge colors
+.badge.rtl-badge  { background-color: #6c63ff !important; }
+.badge.ltr-badge  { background-color: #6c757d !important; }

@@ -48,4 +48,7 @@ return [
     // Locale switcher
     'switch_to_english'   => 'English',
     'switch_to_arabic'    => 'العربية',
+    'language_direction'  => 'Language & Direction',
+    'choose_language'     => 'Choose Language',
+    'current_direction'   => 'Current Direction',
 ];
