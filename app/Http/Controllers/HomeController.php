@@ -37,9 +37,9 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $colorCount = Color::count();
-        $productCount = Product::count();
-        $sizeCount = Size::count();
+        $colorCount = 0;
+        $productCount = 0;
+        $sizeCount = 0;
 
         // Use dummy variables for unused sections if needed to prevent undefined variable errors in view before cleanup
         $workOrderCount = 0;

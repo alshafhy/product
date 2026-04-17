@@ -27,6 +27,8 @@ Route::get('/underMaintenance', [App\Http\Controllers\HomeController::class, 'un
 Route::get('/pageComingSoon', [App\Http\Controllers\HomeController::class, 'pageComingSoon'])->name('pageComingSoon');
 Route::get('/', [App\Http\Controllers\HomeController::class, 'pageComingSoon'])->name('home-page');
 Auth::routes();
+
+
 Route::get('testupload', function () {
     Storage::disk('google')->put('test.txt', 'Hello World');
 });

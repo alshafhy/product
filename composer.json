@@ -9,30 +9,35 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "archtechx/enums": "^1.0",
+        "archtechx/enums": "^1.1",
         "carlos-meneses/laravel-mpdf": "^2.1",
         "guzzlehttp/guzzle": "^7.9",
         "kalnoy/nestedset": "^6.0",
-        "laragear/webauthn": "^4.0",
+        "laragear/webauthn": "^5.0",
         "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^2.10",
-        "laravelcollective/html": "^6.4",
+        "laravel/tinker": "^3.0",
+        "laravel/ui": "^4.6",
+
+        "prabowosd/laravel-collective-html": "^13.0",
+
         "league/flysystem-aws-s3-v3": "^3.29",
+
         "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "opcodesio/log-viewer": "^3.0",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-permission": "^6.0",
-        "tamer-dev/laravel-env-cli": "^1.2",
-        "yajra/laravel-datatables-oracle": "^11.0"
+        "yajra/laravel-datatables-oracle": "^13.0"
+
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.15",
         "fakerphp/faker": "^1.23",
         "laravel/sail": "^1.40",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
+
+
         "phpunit/phpunit": "^11.0",
         "spatie/laravel-ignition": "^2.9"
     },
