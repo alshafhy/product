@@ -310,7 +310,7 @@ Route::resource('colors', App\Http\Controllers\ColorController::class);
 Route::middleware(['auth'])->group(function () {
     // Sale Invoices
     Route::get('sale-invoices', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'index'])->name('saleInvoices.index');
-    Route::get('sale-invoices/create', fn() => view('pos.sale-invoices.create'))->name('saleInvoices.create');
+    Route::get('sale-invoices/create', fn() => view('pos.sales.create'))->name('saleInvoices.create');
     Route::post('sale-invoices', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'store'])->name('saleInvoices.store');
     Route::get('sale-invoices/{saleInvoice}', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'show'])->name('saleInvoices.show');
     Route::patch('sale-invoices/{saleInvoice}/void', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'void'])->name('saleInvoices.void');
