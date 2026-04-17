@@ -2,122 +2,113 @@
 
 namespace App\Models;
 
-use App\Models\AppBaseModel;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Kalnoy\Nestedset\NodeTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use phpDocumentor\Reflection\Types\Collection;
-use PhpParser\Node\Expr\Cast\Array_;
+use Illuminate\Support\Facades\Route;
+use Kalnoy\Nestedset\NodeTrait;
 
-/**
- * Class SystemComponent
- * @package App\Models
- * @version January 14, 2022, 8:54 pm UTC
- *
- * @property string $comp_name
- * @property integer $_lft
- * @property integer $_rgt
- * @property integer $comp_type
- * @property string $route_name
- * @property integer $parent_id
- * @property string $comp_ar_label
- */
 class SystemComponent extends AppBaseModel
 {
-    use SoftDeletes , NodeTrait;
-
+    use SoftDeletes, NodeTrait;
 
     public $table = 'system_components';
-    
-    
-   
-
-
 
     public $fillable = [
         'comp_name',
+        'comp_ar_label',
+        'description',
         '_lft',
         '_rgt',
         'comp_type',
         'route_name',
-        'parent_id',
         'prefix',
-        'comp_ar_label',
-        'is_active',
+        'parent_id',
         'icon_name',
+        'icon_class',
+        'sort_order',
+        'is_active',
+        'permission_name',
         'config',
-        'description'
     ];
 
-    /**
-     * The attributes that should be casted to native types.
-     *
-     * @var array
-     */
     protected $casts = [
-        'id' => 'integer',
-        'comp_name' => 'string',
-        '_lft' => 'integer',
-        '_rgt' => 'integer',
-        'comp_type' => 'integer',
-        'route_name' => 'string',
-        'prefix' => 'string',
-        'parent_id' => 'integer',
-        'comp_ar_label' => 'string',
-        'deleted_at'   =>'datetime',
-        'config'   =>'array',
-        
+        'id'         => 'integer',
+        '_lft'       => 'integer',
+        '_rgt'       => 'integer',
+        'comp_type'  => 'integer',
+        'parent_id'  => 'integer',
+        'sort_order' => 'integer',
+        'is_active'  => 'boolean',
+        'config'     => 'array',
+        'deleted_at' => 'datetime',
     ];
 
-    /**
-     * Validation rules
-     *
-     * @var array
-     */
-    public static $rules = [
-        'comp_name' => 'required',
-        'comp_type' => 'required',
-        'route_name' => 'required'
-    ];
+    public function scopeActive($query): mixed
+    {
+        return $query->where('is_active', true);
+    }
 
-    /**
-     * Scope a query to only include 
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeGetSystemName($query ,$id)
+    public function hasAccess(User $user): bool
+    {
+        if (empty($this->permission_name)) {
+            return true;
+        }
+
+        return $user->hasPermissionTo($this->permission_name);
+    }
+
+    public function getRouteUrl(): string
+    {
+        if (empty($this->route_name)) {
+            return '#';
+        }
+
+        return Route::has($this->route_name) ? route($this->route_name) : '#';
+    }
+
+    public function isCurrentRoute(): bool
+    {
+        if (empty($this->route_name)) {
+            return false;
+        }
+
+        return request()->routeIs($this->route_name . '*');
+    }
+
+    public function parentData(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(SystemComponent::class, 'parent_id', 'id');
+    }
+
+    public function getConfig(): array
+    {
+        return is_array($this->config) ? $this->config : [];
+    }
+
+    public function getReportTemplateName(): string
+    {
+        return $this->getConfig()['reportTemplate'] ?? '';
+    }
+
+    public function getReportButtonsArray(): array
+    {
+        return $this->getConfig()['reportButtons'] ?? [];
+    }
+
+    public function getReportNumber(): string
+    {
+        return (string) ($this->id + 10000);
+    }
+
+    public function scopeGetSystemName($query, int $id): ?string
     {
         $node = self::find($id);
-        $parents = self::whereAncestorOf($node)->get();
 
-        $filtered = $parents->where('comp_type', '=', 1)->pluck('route_name')->first();
+        if (!$node) {
+            return null;
+        }
 
-        return $filtered;
+        return self::whereAncestorOf($node)
+            ->where('comp_type', 1)
+            ->value('route_name');
     }
-    
-    function parentData()  {
-        return $this->belongsTo(\App\Models\SystemComponent::class, 'parent_id' , 'id');
-    }
-
-    function getConfig() : array {
-        return json_decode($this->config,true) ;
-    }
-
-    function getReportTemplateName() : string {
-        $config = $this->getConfig() ;
-        return $config['reportTemplate'] ;
-    }
-
-    function getReportButtonsArray() : array {
-        $config = $this->getConfig() ;
-        return $config['reportButtons'] ;
-    }
-
-    function getReportNumber() : string {
-        return $this->id + 10000;
-    }
-  
-
 }
