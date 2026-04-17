@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
-class Supplier extends AppBaseModel
+class Supplier extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -28,65 +31,52 @@ class Supplier extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'opening_balance' => 'decimal:4',
+        'current_balance' => 'decimal:4',
+    ];
+
+    /**
+     * Configuration for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'id' => 'integer',
-            'opening_balance' => 'float',
-            'current_balance' => 'float',
-            'branch_id' => 'integer',
-            'created_by' => 'integer',
-            'updated_by' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
     }
 
     /**
-     * Recalculate the supplier balance based on opening balance and unpaid invoices.
+     * Recalculate the supplier's current balance based on unpaid purchase invoices.
      */
     public function recalculateBalance(): void
     {
-        // Sum all unpaid purchase invoice remainders.
-        // Assuming PurchaseInvoice has a 'remainder' column.
-        $unpaidAmount = $this->purchaseInvoices()->sum('remainder') ?? 0;
+        $opening = (string) $this->opening_balance;
+        
+        $unpaidTotal = (string) $this->purchaseInvoices()
+            ->where('remaining', '>', 0)
+            ->sum('remaining');
 
-        $this->current_balance = $this->opening_balance + $unpaidAmount;
-        $this->save();
+        $newBalance = bcadd($opening, $unpaidTotal, 4);
+
+        $this->update(['current_balance' => $newBalance]);
     }
 
     /**
-     * Get the purchase invoices for the supplier.
+     * Relations
      */
+
     public function purchaseInvoices(): HasMany
     {
         return $this->hasMany(PurchaseInvoice::class);
     }
 
-    /**
-     * Get the branch the supplier belongs to.
-     */
-    public function branch(): BelongsTo
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Branch::class);
-    }
-
-    /**
-     * Get the user who created the supplier.
-     */
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    /**
-     * Get the user who last updated the supplier.
-     */
-    public function updater(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by');
     }
 }

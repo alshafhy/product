@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
-class Customer extends AppBaseModel
+class Customer extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -28,73 +31,66 @@ class Customer extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'opening_balance' => 'decimal:4',
+        'current_balance' => 'decimal:4',
+    ];
+
+    /**
+     * Configuration for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'id' => 'integer',
-            'opening_balance' => 'float',
-            'current_balance' => 'float',
-            'branch_id' => 'integer',
-            'created_by' => 'integer',
-            'updated_by' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
     }
 
     /**
-     * Recalculate the customer balance based on opening balance and unpaid invoices.
+     * Recalculate the customer's current balance based on unpaid invoices.
+     * 
+     * Formula: opening_balance + sum(remaining from all sale invoices)
      */
     public function recalculateBalance(): void
     {
-        // Sum all unpaid invoice remainders. 
-        // Assuming SaleInvoice has a 'remainder' column.
-        $unpaidAmount = $this->saleInvoices()->sum('remainder') ?? 0;
+        $opening = (string) $this->opening_balance;
         
-        $this->current_balance = $this->opening_balance + $unpaidAmount;
-        $this->save();
+        // Sum remaining balance from all unpaid sale invoices
+        // Note: SaleInvoice model will be part of Module 4
+        $unpaidTotal = (string) $this->saleInvoices()
+            ->where('remaining', '>', 0)
+            ->sum('remaining');
+
+        $newBalance = bcadd($opening, $unpaidTotal, 4);
+
+        $this->update(['current_balance' => $newBalance]);
     }
 
     /**
-     * Get the sale invoices for the customer.
+     * Relations
      */
+
     public function saleInvoices(): HasMany
     {
         return $this->hasMany(SaleInvoice::class);
     }
 
-    /**
-     * Get the installments for the customer.
-     */
     public function installments(): HasMany
     {
         return $this->hasMany(Installment::class);
     }
 
-    /**
-     * Get the branch the customer belongs to.
-     */
-    public function branch(): BelongsTo
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Get the user who created the customer.
-     */
-    public function creator(): BelongsTo
+    public function creator(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    /**
-     * Get the user who last updated the customer.
-     */
-    public function updater(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by');
     }
 }

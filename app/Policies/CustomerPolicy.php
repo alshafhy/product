@@ -4,15 +4,18 @@ namespace App\Policies;
 
 use App\Models\Customer;
 use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CustomerPolicy
 {
+    use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('customer.view');
+        return $user->hasPermissionTo('customer.view');
     }
 
     /**
@@ -20,7 +23,7 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        return $user->can('customer.view');
+        return $user->hasPermissionTo('customer.view');
     }
 
     /**
@@ -28,7 +31,7 @@ class CustomerPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('customer.create');
+        return $user->hasPermissionTo('customer.create');
     }
 
     /**
@@ -36,7 +39,7 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        return $user->can('customer.edit');
+        return $user->hasPermissionTo('customer.edit');
     }
 
     /**
@@ -44,6 +47,6 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        return $user->can('customer.delete');
+        return $user->hasPermissionTo('customer.delete');
     }
 }

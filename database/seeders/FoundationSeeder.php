@@ -50,6 +50,14 @@ class FoundationSeeder extends Seeder
             'product.edit',
             'product.delete',
             'product.adjust_stock',
+            'customer.view',
+            'customer.create',
+            'customer.edit',
+            'customer.delete',
+            'supplier.view',
+            'supplier.create',
+            'supplier.edit',
+            'supplier.delete',
         ];
 
         foreach ($permissions as $permission) {
