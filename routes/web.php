@@ -303,4 +303,43 @@ Route::middleware(['auth', 'acl'])->group(function () {
 
 Route::resource('sizes', App\Http\Controllers\SizeController::class);
 Route::resource('colors', App\Http\Controllers\ColorController::class);
-Route::resource('products', App\Http\Controllers\ProductController::class);
+
+// CashPOS routes
+Route::middleware(['auth'])->group(function () {
+    // Sale Invoices
+    Route::get('sale-invoices', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'index'])->name('saleInvoices.index');
+    Route::get('sale-invoices/create', fn() => view('pos.sale-invoices.create'))->name('saleInvoices.create');
+    Route::post('sale-invoices', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'store'])->name('saleInvoices.store');
+    Route::get('sale-invoices/{saleInvoice}', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'show'])->name('saleInvoices.show');
+    Route::patch('sale-invoices/{saleInvoice}/void', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'void'])->name('saleInvoices.void');
+
+    // Purchase Invoices
+    Route::get('purchase-invoices', [\App\Http\Controllers\POS\PurchaseInvoiceController::class, 'index'])->name('purchaseInvoices.index');
+    Route::get('purchase-invoices/create', fn() => view('pos.purchase-invoices.create'))->name('purchaseInvoices.create');
+    Route::post('purchase-invoices', [\App\Http\Controllers\POS\PurchaseInvoiceController::class, 'store'])->name('purchaseInvoices.store');
+    Route::get('purchase-invoices/{purchaseInvoice}', [\App\Http\Controllers\POS\PurchaseInvoiceController::class, 'show'])->name('purchaseInvoices.show');
+
+    // Customers
+    Route::resource('customers', \App\Http\Controllers\POS\CustomerController::class)->only(['index', 'store', 'show', 'update']);
+
+    // Suppliers
+    Route::resource('suppliers', \App\Http\Controllers\POS\SupplierController::class)->only(['index', 'store', 'show', 'update']);
+
+    // Products (POS)
+    Route::resource('products', \App\Http\Controllers\POS\ProductController::class);
+
+    // Categories
+    Route::resource('categories', \App\Http\Controllers\POS\CategoryController::class)->only(['index', 'store', 'show', 'update']);
+
+    // Treasury
+    Route::get('treasury-transactions', [\App\Http\Controllers\POS\TreasuryController::class, 'index'])->name('treasuryTransactions.index');
+    Route::get('treasury-transactions/create', fn() => view('pos.treasury.create'))->name('treasuryTransactions.create');
+    Route::post('treasury-transactions/deposit', [\App\Http\Controllers\POS\TreasuryController::class, 'deposit'])->name('treasuryTransactions.deposit');
+    Route::post('treasury-transactions/withdraw', [\App\Http\Controllers\POS\TreasuryController::class, 'withdraw'])->name('treasuryTransactions.withdraw');
+
+    // Installments
+    Route::get('installments', [\App\Http\Controllers\POS\InstallmentController::class, 'index'])->name('installments.index');
+    Route::post('installments', [\App\Http\Controllers\POS\InstallmentController::class, 'store'])->name('installments.store');
+    Route::patch('installments/{installment}/collect', [\App\Http\Controllers\POS\InstallmentController::class, 'collect'])->name('installments.collect');
+    Route::get('installments/overdue', [\App\Http\Controllers\POS\InstallmentController::class, 'overdue'])->name('installments.overdue');
+});

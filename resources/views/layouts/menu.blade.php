@@ -1,128 +1,131 @@
-<li class="nav-item  {{Helper::checkCurrentRouteName('home') ? 'active' : ''}}">
-  <a href="{{ route('home') }}" class="d-flex align-items-center">
-    <i data-feather="home"></i>
-    <span class="menu-title text-truncate">@lang('Home')</span>
-  </a>
+{{-- Dashboard --}}
+<li class="nav-item {{ Request::is('home') ? 'active' : '' }}">
+    <a href="{{ route('home') }}" class="d-flex align-items-center">
+        <i data-feather="home"></i>
+        <span class="menu-title text-truncate">{{ __('layout.dashboard') }}</span>
+    </a>
 </li>
 
-
-<x-sys-menu></x-sys-menu>
-
-{{-- <li class="nav-item  {{Route::currentRouteName() === 'labs.index' ? 'active' : ''}}">
-<a href="{{ route('labs.index') }}" class="d-flex align-items-center">
-  <i data-feather="file"></i>
-  <span class="menu-title text-truncate">@lang('models/labs.plural')</span>
-</a>
+{{-- Sales --}}
+<li class="nav-item has-sub {{ Request::is('sale-invoices*') ? 'open' : '' }}">
+    <a href="javascript:void(0)" class="d-flex align-items-center">
+        <i data-feather="shopping-cart"></i>
+        <span class="menu-title text-truncate">{{ __('layout.sales') }}</span>
+    </a>
+    <ul class="menu-content">
+        <li class="{{ Request::is('sale-invoices/create') ? 'active' : '' }}">
+            <a href="{{ route('saleInvoices.create') }}" class="d-flex align-items-center">
+                <i data-feather="plus-circle"></i>
+                <span class="menu-item text-truncate">{{ __('layout.new_sale_invoice') }}</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('sale-invoices') ? 'active' : '' }}">
+            <a href="{{ route('saleInvoices.index') }}" class="d-flex align-items-center">
+                <i data-feather="list"></i>
+                <span class="menu-item text-truncate">{{ __('layout.sales_history') }}</span>
+            </a>
+        </li>
+    </ul>
 </li>
 
-<li class="nav-item  {{Route::currentRouteName() === 'returnSituations.index' ? 'active' : ''}}">
-  <a href="{{ route('returnSituations.index') }}" class="d-flex align-items-center">
-    <i data-feather="file"></i>
-    <span class="menu-title text-truncate">@lang('models/returnSituations.plural')</span>
-  </a>
+{{-- Purchases --}}
+<li class="nav-item has-sub {{ Request::is('purchase-invoices*') ? 'open' : '' }}">
+    <a href="javascript:void(0)" class="d-flex align-items-center">
+        <i data-feather="truck"></i>
+        <span class="menu-title text-truncate">{{ __('layout.purchases') }}</span>
+    </a>
+    <ul class="menu-content">
+        <li class="{{ Request::is('purchase-invoices/create') ? 'active' : '' }}">
+            <a href="{{ route('purchaseInvoices.create') }}" class="d-flex align-items-center">
+                <i data-feather="plus-circle"></i>
+                <span class="menu-item text-truncate">{{ __('layout.new_purchase_invoice') }}</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('purchase-invoices') ? 'active' : '' }}">
+            <a href="{{ route('purchaseInvoices.index') }}" class="d-flex align-items-center">
+                <i data-feather="list"></i>
+                <span class="menu-item text-truncate">{{ __('layout.purchase_history') }}</span>
+            </a>
+        </li>
+    </ul>
 </li>
 
-<li class="nav-item  {{Route::currentRouteName() === 'layers.index' ? 'active' : ''}}">
-  <a href="{{ route('layers.index') }}" class="d-flex align-items-center">
-    <i data-feather="file"></i>
-    <span class="menu-title text-truncate">@lang('models/layers.plural')</span>
-  </a>
+{{-- Customers --}}
+<li class="nav-item {{ Request::is('customers*') ? 'active' : '' }}">
+    <a href="{{ route('customers.index') }}" class="d-flex align-items-center">
+        <i data-feather="users"></i>
+        <span class="menu-title text-truncate">{{ __('layout.customers') }}</span>
+    </a>
 </li>
 
-<li class="nav-item  {{Route::currentRouteName() === 'workOrderFollows.index' ? 'active' : ''}}">
-  <a href="{{ route('workOrderFollows.index') }}" class="d-flex align-items-center">
-    <i data-feather="file"></i>
-    <span class="menu-title text-truncate">@lang('models/workOrderFollows.plural')</span>
-  </a>
-</li> --}}
-
-{{-- new Routs  --}}
-<li class="nav-item {{ Request::is('sizes*') ? 'active' : '' }}">
-  <a href="{!! route('sizes.index') !!}" class="d-flex align-items-center">
-    <i data-feather="box"></i>
-    <span class="menu-title text-truncate">@lang('models/sizes.plural')</span>
-  </a>
-</li>
-<li class="nav-item {{ Request::is('colors*') ? 'active' : '' }}">
-  <a href="{!! route('colors.index') !!}" class="d-flex align-items-center">
-    <i data-feather="droplet"></i>
-    <span class="menu-title text-truncate">@lang('models/colors.plural')</span>
-  </a>
-</li>
-<li class="nav-item {{ Request::is('products*') ? 'active' : '' }}">
-  <a href="{!! route('products.index') !!}" class="d-flex align-items-center">
-    <i data-feather="package"></i>
-    <span class="menu-title text-truncate">@lang('models/products.plural')</span>
-  </a>
-</li>
-{{-- <li class="nav-item  {{Route::currentRouteName() === 'financialDueTypes.index' ? 'active' : ''}}">
-<a href="{{ route('financialDueTypes.index') }}" class="d-flex align-items-center">
-  <i data-feather="file"></i>
-  <span class="menu-title text-truncate">@lang('models/financialDueTypes.plural')</span>
-</a>
+{{-- Suppliers --}}
+<li class="nav-item {{ Request::is('suppliers*') ? 'active' : '' }}">
+    <a href="{{ route('suppliers.index') }}" class="d-flex align-items-center">
+        <i data-feather="briefcase"></i>
+        <span class="menu-title text-truncate">{{ __('layout.suppliers') }}</span>
+    </a>
 </li>
 
-<li class="nav-item  {{Route::currentRouteName() === 'achievementCertificates.index' ? 'active' : ''}}">
-  <a href="{{ route('achievementCertificates.index') }}" class="d-flex align-items-center">
-    <i data-feather="file"></i>
-    <span class="menu-title text-truncate">@lang('models/achievementCertificates.plural')</span>
-  </a>
+{{-- Inventory --}}
+<li class="nav-item has-sub {{ Request::is('products*', 'categories*') ? 'open' : '' }}">
+    <a href="javascript:void(0)" class="d-flex align-items-center">
+        <i data-feather="archive"></i>
+        <span class="menu-title text-truncate">{{ __('layout.inventory') }}</span>
+    </a>
+    <ul class="menu-content">
+        <li class="{{ Request::is('products*') ? 'active' : '' }}">
+            <a href="{{ route('products.index') }}" class="d-flex align-items-center">
+                <i data-feather="package"></i>
+                <span class="menu-item text-truncate">{{ __('layout.products') }}</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('categories*') ? 'active' : '' }}">
+            <a href="{{ route('categories.index') }}" class="d-flex align-items-center">
+                <i data-feather="tag"></i>
+                <span class="menu-item text-truncate">{{ __('layout.categories') }}</span>
+            </a>
+        </li>
+    </ul>
 </li>
 
-<li class="nav-item  {{Route::currentRouteName() === 'financialDues.index' ? 'active' : ''}}">
-  <a href="{{ route('financialDues.index') }}" class="d-flex align-items-center">
-    <i data-feather="file"></i>
-    <span class="menu-title text-truncate">@lang('models/financialDues.plural')</span>
-  </a>
+{{-- Treasury --}}
+<li class="nav-item has-sub {{ Request::is('treasury-transactions*', 'installments*') ? 'open' : '' }}">
+    <a href="javascript:void(0)" class="d-flex align-items-center">
+        <i data-feather="dollar-sign"></i>
+        <span class="menu-title text-truncate">{{ __('layout.treasury') }}</span>
+    </a>
+    <ul class="menu-content">
+        <li class="{{ Request::is('treasury-transactions') ? 'active' : '' }}">
+            <a href="{{ route('treasuryTransactions.index') }}" class="d-flex align-items-center">
+                <i data-feather="repeat"></i>
+                <span class="menu-item text-truncate">{{ __('layout.transactions') }}</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('treasury-transactions/create') ? 'active' : '' }}">
+            <a href="{{ route('treasuryTransactions.create') }}" class="d-flex align-items-center">
+                <i data-feather="arrow-down-circle"></i>
+                <span class="menu-item text-truncate">{{ __('layout.deposit_withdraw') }}</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('installments') ? 'active' : '' }}">
+            <a href="{{ route('installments.index') }}" class="d-flex align-items-center">
+                <i data-feather="credit-card"></i>
+                <span class="menu-item text-truncate">{{ __('layout.installments') }}</span>
+            </a>
+        </li>
+        <li class="{{ Request::is('installments/overdue*') ? 'active' : '' }}">
+            <a href="{{ route('installments.overdue') }}" class="d-flex align-items-center">
+                <i data-feather="alert-circle"></i>
+                <span class="menu-item text-truncate">{{ __('layout.overdue_installments') }}</span>
+            </a>
+        </li>
+    </ul>
 </li>
 
-<li class="nav-item  {{Route::currentRouteName() === 'baladies.index' ? 'active' : ''}}">
-  <a href="{{ route('baladies.index') }}" class="d-flex align-items-center">
-    <i data-feather="file"></i>
-    <span class="menu-title text-truncate">@lang('models/baladies.plural')</span>
-  </a>
-</li> --}}
-
-{{-- <li class="nav-item  {{Route::currentRouteName() === 'emergencyMissions.index' ? 'active' : ''}}">
-<a href="{{ route('emergencyMissions.index') }}" class="d-flex align-items-center">
-  <i data-feather="file"></i>
-  <span class="menu-title text-truncate">@lang('models/emergencyMissions.plural')</span>
-</a>
-</li> --}}
-
-
-{{-- <li class="nav-item  {{Route::currentRouteName() === 'missionTypes.index' ? 'active' : ''}}">
-<a href="{{ route('missionTypes.index') }}" class="d-flex align-items-center">
-  <i data-feather="file"></i>
-  <span class="menu-title text-truncate">@lang('models/missionTypes.plural')</span>
-</a>
-</li> --}}
-
-{{-- <li class="nav-item  {{Route::currentRouteName() === 'consultants.index' ? 'active' : ''}}">
-<a href="{{ route('consultants.index') }}" class="d-flex align-items-center">
-  <i data-feather="file"></i>
-  <span class="menu-title text-truncate">@lang('models/consultants.plural')</span>
-</a>
-</li> --}}
-
-
-{{-- <li class="nav-item">
-    <a href="{{ route('systemReleases.index') }}" class="nav-link {{ Request::is('systemReleases*') ? 'active' : '' }}">
-<i class="nav-icon fas fa-home"></i>
-<p>@lang('models/systemReleases.plural')</p>
-</a>
+{{-- User Management --}}
+<li class="nav-item {{ Request::is('users*') ? 'active' : '' }}">
+    <a href="{{ route('users.index') }}" class="d-flex align-items-center">
+        <i data-feather="user-check"></i>
+        <span class="menu-title text-truncate">{{ __('layout.user_management') }}</span>
+    </a>
 </li>
-
-<li class="nav-item">
-  <a href="{{ route('systemReleasesFeatures.index') }}" class="nav-link {{ Request::is('systemReleasesFeatures*') ? 'active' : '' }}">
-    <i class="nav-icon fas fa-home"></i>
-    <p>@lang('models/systemReleasesFeatures.plural')</p>
-  </a>
-</li> --}}
-
-{{-- <li class="nav-item">
-    <a href="{{ route('workOrderTransactionsHistories.index') }}" class="nav-link {{ Request::is('workOrderTransactionsHistories*') ? 'active' : '' }}">
-<i class="nav-icon fas fa-home"></i>
-<p>@lang('models/workOrderTransactionsHistories.plural')</p>
-</a>
-</li> --}}
