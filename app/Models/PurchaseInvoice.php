@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
-class PurchaseInvoice extends AppBaseModel
+class PurchaseInvoice extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -20,14 +24,9 @@ class PurchaseInvoice extends AppBaseModel
         'supplier_id',
         'user_id',
         'branch_id',
-        'subtotal',
-        'discount',
-        'discount_type',
         'total',
         'paid',
         'remaining',
-        'previous_debt',
-        'total_debt',
         'payment_type',
         'status',
         'notes',
@@ -37,76 +36,53 @@ class PurchaseInvoice extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'total' => 'decimal:4',
+        'paid' => 'decimal:4',
+        'remaining' => 'decimal:4',
+        'invoiced_at' => 'datetime',
+    ];
+
+    /**
+     * Configuration for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'id' => 'integer',
-            'subtotal' => 'float',
-            'discount' => 'float',
-            'total' => 'float',
-            'paid' => 'float',
-            'remaining' => 'float',
-            'previous_debt' => 'float',
-            'total_debt' => 'float',
-            'invoiced_at' => 'datetime',
-            'supplier_id' => 'integer',
-            'user_id' => 'integer',
-            'branch_id' => 'integer',
-            'created_by' => 'integer',
-            'updated_by' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
     }
 
     /**
-     * Get the supplier associated with the invoice.
+     * Relations
      */
+
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    /**
-     * Get the user who issued the invoice.
-     */
-    public function user(): BelongsTo
+    public function buyer(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * Get the branch where the invoice was issued.
-     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Get the items for the purchase invoice.
-     */
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseInvoiceItem::class);
     }
 
-    /**
-     * Get the user who created the record.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
-    }
-
-    /**
-     * Get the user who last updated the record.
-     */
-    public function updater(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'updated_by');
     }
 }
