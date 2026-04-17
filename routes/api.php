@@ -25,3 +25,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
 });
 
+require __DIR__ . '/pos.php';
+
