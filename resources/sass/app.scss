@@ -173,3 +173,75 @@ html[dir="rtl"] .menu-collapsed .content {
     }
 }
 
+/* ─── RTL EXPANDED MENU FIX ─── */
+
+/* Force menu EXPANDED by default in RTL */
+html[dir="rtl"] .main-menu {
+    left: auto !important;
+    right: 0 !important;
+    width: 260px !important;
+    transform: translateZ(0) !important;
+}
+
+/* Show menu text — remove collapsed state */
+html[dir="rtl"] body.menu-collapsed .main-menu,
+html[dir="rtl"] body:not(.menu-collapsed) .main-menu {
+    left: auto !important;
+    right: 0 !important;
+    width: 260px !important;
+}
+
+/* Hide the collapsed icon-only mode */
+html[dir="rtl"] .main-menu .navbar-header .brand-text,
+html[dir="rtl"] .main-menu ul li a span {
+    display: inline !important;
+    opacity: 1 !important;
+}
+
+/* ─── RTL NAVBAR POSITIONING FIX ─── */
+/* core.css sets left:260px; right:0 for LTR. For RTL (right-side sidebar) we flip this. */
+
+html[dir="rtl"] .header-navbar.fixed-top,
+html[dir="rtl"] .header-navbar.floating-nav {
+    left: 0 !important;
+    right: 260px !important;
+}
+
+html[dir="rtl"] .header-navbar.floating-nav {
+    width: calc(100vw - (100vw - 100%) - calc(2rem * 2) - 260px) !important;
+}
+
+html[dir="rtl"] .header-navbar.navbar-static-top {
+    left: 0 !important;
+    right: 260px !important;
+    width: calc(100vw - (100vw - 100%) - 260px) !important;
+}
+
+/* RTL collapsed state navbar (sidebar shrinks to 80px) */
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.fixed-top,
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.floating-nav {
+    left: 0 !important;
+    right: 80px !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.floating-nav {
+    width: calc(100vw - (100vw - 100%) - 4.4rem - 74px) !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.navbar-static-top {
+    left: 0 !important;
+    right: 74px !important;
+    width: calc(100vw - (100vw - 100%) - 74px) !important;
+}
+
+/* RTL footer margins */
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-expanded .footer {
+    margin-left: 0 !important;
+    margin-right: 260px !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .footer {
+    margin-left: 0 !important;
+    margin-right: 80px !important;
+}
+

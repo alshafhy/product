@@ -9,3 +9,73 @@ NOTE:
 ------
 PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
 WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+
+// ─── RTL Layout Fix ─────────────────────────────────────────────────────────
+// core.css positions navbar with left:260px; right:0 (LTR/left sidebar).
+// For RTL (right-side sidebar) we must flip: right:260px; left:0.
+
+html[dir="rtl"] .header-navbar.fixed-top,
+html[dir="rtl"] .header-navbar.floating-nav {
+    left: 0 !important;
+    right: 260px !important;
+}
+
+html[dir="rtl"] .header-navbar.floating-nav {
+    width: calc(100vw - (100vw - 100%) - calc(2rem * 2) - 260px) !important;
+}
+
+html[dir="rtl"] .header-navbar.navbar-static-top {
+    left: 0 !important;
+    right: 260px !important;
+    width: calc(100vw - (100vw - 100%) - 260px) !important;
+}
+
+// Collapsed sidebar (80px) navbar adjustments
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.fixed-top,
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.floating-nav {
+    left: 0 !important;
+    right: 80px !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.floating-nav {
+    width: calc(100vw - (100vw - 100%) - 4.4rem - 74px) !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.navbar-static-top {
+    left: 0 !important;
+    right: 74px !important;
+    width: calc(100vw - (100vw - 100%) - 74px) !important;
+}
+
+// Sidebar position (right side for RTL)
+html[dir="rtl"] .main-menu {
+    left: auto !important;
+    right: 0 !important;
+    width: 260px !important;
+    transform: translateZ(0) !important;
+}
+
+// Content margin for RTL (offset from right sidebar)
+html[dir="rtl"] .app-content,
+html[dir="rtl"] .content {
+    margin-right: 260px !important;
+    margin-left: 0 !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .app-content,
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .footer {
+    margin-right: 80px !important;
+    margin-left: 0 !important;
+}
+
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-expanded .footer {
+    margin-left: 0 !important;
+    margin-right: 260px !important;
+}
+
+// Ensure menu text is visible in RTL
+html[dir="rtl"] .main-menu .navbar-header .brand-text,
+html[dir="rtl"] .main-menu ul li a span {
+    display: inline !important;
+    opacity: 1 !important;
+}
