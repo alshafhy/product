@@ -1,0 +1,804 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+/**
+ * Class AppBaseModel
+ * @package App\Models
+ */
+class AppBaseModel extends Model
+{
+
+    public function scopeFilter($q,$sessionFilterName=""){
+
+        if ($sessionFilterName && session($sessionFilterName)){
+            $filterArray = session($sessionFilterName);
+            // dd($filterArray);
+            foreach ($filterArray as $key => $value) {
+                if($value){
+                    // if (str_contains($key,"||")){
+                    //     $arr =explode("||",$key);
+                    //     $key =$arr[0];
+                    // }
+                    if (str_contains($key,"from_")){
+                        $q = $q->where(str_replace("from_","",$key),">=",$value);
+                    }elseif(str_contains($key,"to_")){
+                        $q = $q->where(str_replace("to_","",$key),"<=",$value);
+                    }else{
+                        $q = $q->where($key,$value);
+                    }  
+                }
+            }
+            $filterArray = session($sessionFilterName);
+        }
+
+        // if (request('price_from')) {
+        //     $q->where('price', '>', request('price_from'));
+        // }
+        // if (request('color')) {
+        //     $q->where('color', '>', request('color'));
+        // }
+    
+        return $q;
+    }
+
+
+}
+<?php
+
+namespace App\Models;
+
+use App\Traits\Branchable;
+use Illuminate\Support\Str;
+use App\Models\AppBaseModel;
+use App\Traits\CreatedUpdatedBy;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class Attachment extends AppBaseModel
+{
+    use HasFactory, SoftDeletes, LogsActivity ,Branchable , CreatedUpdatedBy;
+
+    protected $fillable = [
+        'uuid',
+        'model_type',
+        'model_id',
+        'path',
+        'name',
+        'filename',
+        'type',
+        'extension',
+        'size',
+        'attachment_type_id',
+        'title',
+        'description',
+        'metadata',
+        'created_by',
+        'updated_by',
+        'driver_type',
+    ];
+
+    protected $casts = [
+        'metadata'=>'array'
+    ];
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        // 'title' => 'required'
+    ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('Attachment')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logAll();
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $model->uuid = (string) Str::uuid();
+            if(empty($model->created_by)) {
+                $model->created_by = auth()->id() ?? null;
+                $model->updated_by = auth()->id() ?? null;
+            }
+        });
+        static::updating(function ($model) {
+            if(empty($model->updated_by)) {
+                $model->updated_by = auth()->id() ?? null;
+            }
+        });
+    }
+
+    public function activities(){
+        return $this->hasMany(Activity::class,'subject_id','id')->where(['subject_type'=>'App\Models\Attachment']);
+    }
+
+    public function attachmentType(){
+        return $this->hasOne(AttachmentType::class,'id','attachment_type_id');
+    }
+
+    public function creator(){
+        return $this->hasOne(User::class,'id','created_by')->withDefault(['name'=>'-']);
+    }
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\AppBaseModel;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class AttachmentType extends AppBaseModel
+{
+    use HasFactory, SoftDeletes, LogsActivity;
+    public $table = 'attachment_types';
+    
+
+   
+
+
+
+    public $fillable = [
+        'title',
+        'description'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'id' => 'integer',
+        'title' => 'string',
+        'description' => 'string',
+        'deleted_at'   =>'datetime'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        'title' => 'required'
+    ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('AttachmentType')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logAll();
+    }
+
+    public function activities(){
+        return $this->hasMany(Activity::class,'subject_id','id')->where(['subject_type'=>'App\Models\AttachmentType']);
+    }
+
+    public function attachment(){
+        return $this->hasMany(Attachment::class,'attachment_type_id','id');
+    }
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Color extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['name'];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public static $rules = [
+        'name' => 'required|string|max:255'
+    ];
+}
+<?php
+
+namespace App\Models;
+
+use App\Http\Traits\AttachmentTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\AppBaseModel;
+
+class Post extends AppBaseModel
+{
+    use HasFactory;
+    use AttachmentTrait;
+
+    protected $fillable = ['title', 'body'];
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class ProductImage extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['product_id', 'image_path'];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['name', 'price', 'size_id', 'color_id'];
+
+    public function size()
+    {
+        return $this->belongsTo(Size::class);
+    }
+
+    public function color()
+    {
+        return $this->belongsTo(Color::class);
+    }
+
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+
+    public static $rules = [
+        'name' => 'required|string|max:255',
+        'price' => 'required|numeric',
+        'size_id' => 'required|exists:sizes,id',
+        'color_id' => 'required|exists:colors,id'
+    ];
+}
+<?php
+
+namespace App\Models;
+
+use App\Models\AppBaseModel;
+use App\Models\LandLayer;
+
+
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+/**
+ * Class ReturnSituation
+ * @package App\Models
+ * @version March 25, 2022, 6:23 pm UTC
+ *
+ * @property integer $work_order_number
+ * @property integer $work_type_id
+ */
+class ReturnSituation extends AppBaseModel
+{
+    use LogsActivity;
+    use SoftDeletes;
+
+
+    public $table = 'work_orders';
+    
+
+   
+
+
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('ReturnSituation')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logAll();
+    }
+
+    public $fillable = [
+        'work_order_number',
+        'work_type_id',
+        'district_id',
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'id' => 'integer',
+        'work_order_number' => 'integer',
+        'work_type_id' => 'integer',
+        'deleted_at'   =>'datetime'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+
+    public function landLayers()
+    {
+        return $this->hasMany(LandLayer::class , 'work_order_id' , 'id' );
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function workType()
+    {
+        return $this->belongsTo(\App\Models\WorkType::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function workOrdersType()
+    {
+        return $this->belongsTo(\App\Models\WorkOrdersType::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function city()
+    {
+        return $this->belongsTo(\App\Models\City::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function district()
+    {
+        return $this->belongsTo(\App\Models\District::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function currentDepartment()
+    {
+        return $this->belongsTo(\App\Models\Department::class, 'current_department_id', 'id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function electricalStationsType()
+    {
+        return $this->belongsTo(\App\Models\ElectricalStationsType::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function workOrdersStage()
+    {
+        return $this->belongsTo(\App\Models\WorkOrdersStage::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function electricityDepartment()
+    {
+        return $this->belongsTo(\App\Models\ElectricityDepartment::class);
+    }
+
+    public function workOrdersPermits()
+    {
+        return $this->belongsToMany(WorkOrdersPermit::class);
+    }
+
+    public function activities(){
+        return $this->hasMany(Activity::class,'subject_id','id')->where(['subject_type'=>'App\Models\ReturnSituation']);
+    }
+}
+<?php
+
+namespace App\Models;
+
+use App\Models\AppBaseModel;
+
+
+
+/**
+ * Class Role
+ * @package App\Models
+ * @version January 1, 2022, 10:52 am UTC
+ *
+ * @property string $name
+ * @property string $ar_name
+ */
+class Role extends AppBaseModel
+{
+
+
+    public $table = 'roles';
+    
+
+
+
+    public $fillable = [
+        'name',
+        'ar_name'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'id' => 'integer',
+        'name' => 'string',
+        'ar_name' => 'string'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Size extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['name'];
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public static $rules = [
+        'name' => 'required|string|max:255'
+    ];
+}
+<?php
+
+namespace App\Models;
+
+use App\Models\AppBaseModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Kalnoy\Nestedset\NodeTrait;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use phpDocumentor\Reflection\Types\Collection;
+use PhpParser\Node\Expr\Cast\Array_;
+
+/**
+ * Class SystemComponent
+ * @package App\Models
+ * @version January 14, 2022, 8:54 pm UTC
+ *
+ * @property string $comp_name
+ * @property integer $_lft
+ * @property integer $_rgt
+ * @property integer $comp_type
+ * @property string $route_name
+ * @property integer $parent_id
+ * @property string $comp_ar_label
+ */
+class SystemComponent extends AppBaseModel
+{
+    use SoftDeletes , NodeTrait;
+
+
+    public $table = 'system_components';
+    
+    
+   
+
+
+
+    public $fillable = [
+        'comp_name',
+        '_lft',
+        '_rgt',
+        'comp_type',
+        'route_name',
+        'parent_id',
+        'prefix',
+        'comp_ar_label',
+        'is_active',
+        'icon_name',
+        'config',
+        'description'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'id' => 'integer',
+        'comp_name' => 'string',
+        '_lft' => 'integer',
+        '_rgt' => 'integer',
+        'comp_type' => 'integer',
+        'route_name' => 'string',
+        'prefix' => 'string',
+        'parent_id' => 'integer',
+        'comp_ar_label' => 'string',
+        'deleted_at'   =>'datetime',
+        'config'   =>'array',
+        
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        'comp_name' => 'required',
+        'comp_type' => 'required',
+        'route_name' => 'required'
+    ];
+
+    /**
+     * Scope a query to only include 
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeGetSystemName($query ,$id)
+    {
+        $node = self::find($id);
+        $parents = self::whereAncestorOf($node)->get();
+
+        $filtered = $parents->where('comp_type', '=', 1)->pluck('route_name')->first();
+
+        return $filtered;
+    }
+    
+    function parentData()  {
+        return $this->belongsTo(\App\Models\SystemComponent::class, 'parent_id' , 'id');
+    }
+
+    function getConfig() : array {
+        return json_decode($this->config,true) ;
+    }
+
+    function getReportTemplateName() : string {
+        $config = $this->getConfig() ;
+        return $config['reportTemplate'] ;
+    }
+
+    function getReportButtonsArray() : array {
+        $config = $this->getConfig() ;
+        return $config['reportButtons'] ;
+    }
+
+    function getReportNumber() : string {
+        return $this->id + 10000;
+    }
+  
+
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\SoftDeletes;
+class SystemRelease extends Model
+{
+     use SoftDeletes;    public $table = 'system_releases';
+
+    public $fillable = [
+        'version_number',
+        'release_date'
+    ];
+
+    protected $casts = [
+        'version_number' => 'string',
+        'release_date' => 'date'
+    ];
+
+    public static array $rules = [
+        'version_number' => 'required',
+        'release_date' => 'required'
+    ];
+
+    function features()  {
+        return $this->hasMany(\App\Models\SystemReleasesFeature::class, 'system_release_id' , 'id');
+    }
+}
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+ use Illuminate\Database\Eloquent\SoftDeletes;
+class SystemReleasesFeature extends Model
+{
+     use SoftDeletes;    public $table = 'system_releases_features';
+
+    public $fillable = [
+        'system_release_id',
+        'title',
+        'description',
+        'feature_order'
+    ];
+
+    protected $casts = [
+        'system_release_id' => 'integer',
+        'title' => 'string',
+        'description' => 'string',
+        'feature_order' => 'integer'
+    ];
+
+    public static array $rules = [
+        'system_release_id' => 'required'
+    ];
+
+    public function release()
+    {
+        return $this->belongsTo(SystemRelease::class);
+    }
+}
+<?php
+
+namespace App\Models;
+
+use Spatie\Activitylog\LogOptions;
+use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Models\Activity;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
+class User extends Authenticatable implements WebAuthnAuthenticatable
+{
+    use HasFactory, Notifiable, LogsActivity, HasRoles, WebAuthnAuthentication;
+
+
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+        'username',
+        'email',
+        'password',
+        'branch_id',
+        'last_login_at',
+        'last_login_ip_address',
+        'access_token',
+        'pass_need_to_be_changed'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        'name' => 'required',
+        'username' => 'required|unique:users',
+        'email' => 'required|email|unique:users'
+    ];
+
+    public static $rulesForUpdate = [
+        'name' => 'required',
+        'username' => 'required',
+        'email' => 'required|email'
+    ];
+
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('User')
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->logOnly(['name', 'username', 'email']);
+    }
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'last_login_at' => 'datetime',
+    ];
+
+
+
+    public function activities()
+    {
+        return $this->hasMany(Activity::class, 'subject_id', 'id')->where(['subject_type' => 'App\Models\User']);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     **/
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
+    }
+}

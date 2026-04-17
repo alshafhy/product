@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PermissionsSeeder::class, 
             DemoUserSeeder::class,
             SystemReleasesSeeder::class,
+            FoundationLookupSeeder::class,
         ]);
     }
 }
