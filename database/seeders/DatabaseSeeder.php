@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             SystemReleasesSeeder::class,
             FoundationLookupSeeder::class,
             ProductSeeder::class,
+            PeopleSeeder::class,
         ]);
     }
 }
