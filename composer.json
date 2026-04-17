@@ -13,6 +13,7 @@
         "carlos-meneses/laravel-mpdf": "^2.1",
         "guzzlehttp/guzzle": "^7.9",
         "kalnoy/nestedset": "^6.0",
+        "laracasts/flash": "^3.2",
         "laragear/webauthn": "^5.0",
         "laravel/framework": "^13.0",
         "laravel/sanctum": "^4.0",
