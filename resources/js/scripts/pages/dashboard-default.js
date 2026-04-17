@@ -143,8 +143,10 @@ $(window).on('load', function () {
       }
     }
   };
-  statisticsOrderChart = new ApexCharts($statisticsOrderChart, statisticsOrderChartOptions);
-  statisticsOrderChart.render();
+  if ($statisticsOrderChart) {
+    statisticsOrderChart = new ApexCharts($statisticsOrderChart, statisticsOrderChartOptions);
+    statisticsOrderChart.render();
+  }
 
   //------------ Statistics Line Chart ------------
   //-----------------------------------------------
@@ -232,8 +234,10 @@ $(window).on('load', function () {
       }
     }
   };
-  statisticsProfitChart = new ApexCharts($statisticsProfitChart, statisticsProfitChartOptions);
-  statisticsProfitChart.render();
+  if ($statisticsProfitChart) {
+    statisticsProfitChart = new ApexCharts($statisticsProfitChart, statisticsProfitChartOptions);
+    statisticsProfitChart.render();
+  }
 
   // Average Session Chart
   // ----------------------------------
@@ -284,8 +288,10 @@ $(window).on('load', function () {
       type: 'numeric'
     }
   };
-  avgSessionsChart = new ApexCharts($avgSessionsChart, avgSessionsChartOptions);
-  avgSessionsChart.render();
+  if ($avgSessionsChart) {
+    avgSessionsChart = new ApexCharts($avgSessionsChart, avgSessionsChartOptions);
+    avgSessionsChart.render();
+  }
 
   // Support Tracker Chart
   // -----------------------------
@@ -341,8 +347,10 @@ $(window).on('load', function () {
     series: [83],
     labels: ['أوامر العمل المسلمة']
   };
-  supportTrackerChart = new ApexCharts($supportTrackerChart, supportTrackerChartOptions);
-  supportTrackerChart.render();
+  if ($supportTrackerChart) {
+    supportTrackerChart = new ApexCharts($supportTrackerChart, supportTrackerChartOptions);
+    supportTrackerChart.render();
+  }
 
   //--------------- Earnings Chart ---------------
   //----------------------------------------------
@@ -432,8 +440,10 @@ $(window).on('load', function () {
       }
     ]
   };
-  earningsChart = new ApexCharts($earningsChart, earningsChartOptions);
-  earningsChart.render();
+  if ($earningsChart) {
+    earningsChart = new ApexCharts($earningsChart, earningsChartOptions);
+    earningsChart.render();
+  }
 
   //------------ Revenue Report Chart ------------
   //----------------------------------------------
@@ -501,8 +511,10 @@ $(window).on('load', function () {
       }
     }
   };
-  revenueReportChart = new ApexCharts($revenueReportChart, revenueReportChartOptions);
-  revenueReportChart.render();
+  if ($revenueReportChart) {
+    revenueReportChart = new ApexCharts($revenueReportChart, revenueReportChartOptions);
+    revenueReportChart.render();
+  }
 
   //---------------- Budget Chart ----------------
   //----------------------------------------------
@@ -532,8 +544,10 @@ $(window).on('load', function () {
       enabled: false
     }
   };
-  budgetChart = new ApexCharts($budgetChart, budgetChartOptions);
-  budgetChart.render();
+  if ($budgetChart) {
+    budgetChart = new ApexCharts($budgetChart, budgetChartOptions);
+    budgetChart.render();
+  }
 
   //------------ Browser State Charts ------------
   //----------------------------------------------

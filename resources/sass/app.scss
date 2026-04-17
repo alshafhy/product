@@ -127,3 +127,49 @@ html.ltr .collapse-arrow {
 // Active badge direction badge colors
 .badge.rtl-badge  { background-color: #6c63ff !important; }
 .badge.ltr-badge  { background-color: #6c757d !important; }
+
+/* ── NUCLEAR FIX: Force Vuexy sidebar to RIGHT in RTL ── */
+html[dir="rtl"] .main-menu {
+    left: auto !important;
+    right: 0 !important;
+}
+
+html[dir="ltr"] .main-menu {
+    right: auto !important;
+    left: 0 !important;
+}
+
+/* Fix content margin */
+html[dir="rtl"] .content {
+    margin-right: 260px !important;
+    margin-left: 0 !important;
+}
+
+html[dir="ltr"] .content {
+    margin-left: 260px !important;
+    margin-right: 0 !important;
+}
+
+/* Fix collapsed state */
+html[dir="rtl"] .menu-collapsed .main-menu {
+    right: 0 !important;
+    left: auto !important;
+}
+
+html[dir="rtl"] .menu-collapsed .content {
+    margin-right: 80px !important;
+    margin-left: 0 !important;
+}
+
+/* Fix mobile hidden state */
+@media (max-width: 767.98px) {
+    html[dir="rtl"] .main-menu {
+        right: auto !important;
+        left: auto !important;
+        transform: translate3d(240px, 0, 0) !important;
+    }
+    html[dir="rtl"] .menu-open .main-menu {
+        transform: translateZ(0) !important;
+    }
+}
+
