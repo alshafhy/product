@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             SaleInvoicePermissionsSeeder::class,
             PurchaseInvoicePermissionsSeeder::class,
             TreasuryPermissionsSeeder::class,
+            InstallmentPermissionsSeeder::class,
         ]);
     }
 }
