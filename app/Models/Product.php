@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
-class Product extends AppBaseModel
+class Product extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -22,13 +24,12 @@ class Product extends AppBaseModel
         'description',
         'category_id',
         'sell_price',
-        'sell_price2',
-        'sell_price3',
         'buy_price',
+        'sell_price2',
         'buy_price2',
+        'sell_price3',
         'buy_price3',
         'quantity',
-        'expire_date',
         'unit1',
         'unit2',
         'unit3',
@@ -38,109 +39,84 @@ class Product extends AppBaseModel
         'sell_price_unit3',
         'barcode2',
         'barcode3',
+        'expire_date',
         'branch_id',
         'created_by',
         'updated_by',
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'sell_price' => 'decimal:4',
+        'buy_price' => 'decimal:4',
+        'sell_price2' => 'decimal:4',
+        'buy_price2' => 'decimal:4',
+        'sell_price3' => 'decimal:4',
+        'buy_price3' => 'decimal:4',
+        'quantity' => 'decimal:4',
+        'factor2' => 'decimal:4',
+        'factor3' => 'decimal:4',
+        'sell_price_unit2' => 'decimal:4',
+        'sell_price_unit3' => 'decimal:4',
+        'expire_date' => 'date',
+    ];
+
+    /**
+     * Configuration for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'id' => 'integer',
-            'sell_price' => 'float',
-            'sell_price2' => 'float',
-            'sell_price3' => 'float',
-            'buy_price' => 'float',
-            'buy_price2' => 'float',
-            'buy_price3' => 'float',
-            'quantity' => 'float',
-            'factor2' => 'float',
-            'factor3' => 'float',
-            'sell_price_unit2' => 'float',
-            'sell_price_unit3' => 'float',
-            'expire_date' => 'date',
-            'category_id' => 'integer',
-            'branch_id' => 'integer',
-            'created_by' => 'integer',
-            'updated_by' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
     }
 
     /**
-     * Scope a query to only include products with stock less than or equal to a threshold.
+     * Get the effective sell price using BCMath.
+     * 
+     * @param string $priceType The column name (e.g. 'sell_price', 'sell_price2')
+     * @return string
      */
-    public function scopeLowStock(Builder $query, float $threshold = 5): Builder
+    public function getEffectiveSellPrice(string $priceType): string
+    {
+        $price = (string) ($this->{$priceType} ?? '0');
+        // Ensure it's a valid bcmath string (normalized)
+        return bcadd('0', $price, 4);
+    }
+
+    /**
+     * Scope for low stock identification.
+     */
+    public function scopeLowStock($query, $threshold = 5)
     {
         return $query->where('quantity', '<=', $threshold);
     }
 
     /**
-     * Get the sell price for a specific unit.
+     * Relations
      */
-    public function getEffectiveSellPrice(?string $unit): float
-    {
-        if (!$unit) {
-            return (float) $this->sell_price;
-        }
 
-        if ($unit === $this->unit1) {
-            return (float) $this->sell_price;
-        }
-
-        if ($unit === $this->unit2) {
-            return (float) $this->sell_price_unit2;
-        }
-
-        if ($unit === $this->unit3) {
-            return (float) $this->sell_price_unit3;
-        }
-
-        return (float) $this->sell_price;
-    }
-
-    /**
-     * Get the category that the product belongs to.
-     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Get the branch that the product belongs to.
-     */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Get the user who created the product.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Get the user who last updated the product.
-     */
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    /**
-     * Get the images for the product.
-     */
-    public function images(): HasMany
-    {
-        return $this->hasMany(ProductImage::class);
     }
 }

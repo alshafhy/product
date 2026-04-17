@@ -4,16 +4,18 @@ namespace App\Policies;
 
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ProductPolicy
 {
+    use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('product.view');
+        return $user->hasPermissionTo('product.view');
     }
 
     /**
@@ -21,7 +23,7 @@ class ProductPolicy
      */
     public function view(User $user, Product $product): bool
     {
-        return $user->can('product.view');
+        return $user->hasPermissionTo('product.view');
     }
 
     /**
@@ -29,7 +31,7 @@ class ProductPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('product.create');
+        return $user->hasPermissionTo('product.create');
     }
 
     /**
@@ -37,7 +39,7 @@ class ProductPolicy
      */
     public function update(User $user, Product $product): bool
     {
-        return $user->can('product.edit');
+        return $user->hasPermissionTo('product.edit');
     }
 
     /**
@@ -45,22 +47,14 @@ class ProductPolicy
      */
     public function delete(User $user, Product $product): bool
     {
-        return $user->can('product.delete');
+        return $user->hasPermissionTo('product.delete');
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Determine whether the user can adjust stock.
      */
-    public function restore(User $user, Product $product): bool
+    public function adjustStock(User $user, Product $product): bool
     {
-        return $user->can('product.edit');
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Product $product): bool
-    {
-        return $user->can('product.delete');
+        return $user->hasPermissionTo('product.adjust_stock');
     }
 }

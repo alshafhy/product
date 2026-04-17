@@ -45,6 +45,11 @@ class FoundationSeeder extends Seeder
             'category.create',
             'category.edit',
             'category.delete',
+            'product.view',
+            'product.create',
+            'product.edit',
+            'product.delete',
+            'product.adjust_stock',
         ];
 
         foreach ($permissions as $permission) {
