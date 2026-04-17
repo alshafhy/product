@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             FoundationLookupSeeder::class,
             ProductSeeder::class,
             PeopleSeeder::class,
+            SaleInvoicePermissionsSeeder::class,
         ]);
     }
 }
