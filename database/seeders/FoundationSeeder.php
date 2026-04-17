@@ -71,6 +71,10 @@ class FoundationSeeder extends Seeder
             'treasury.deposit',
             'treasury.withdraw',
             'treasury.reports',
+            'installment.view',
+            'installment.create',
+            'installment.edit',
+            'installment.collect',
         ];
 
         foreach ($permissions as $permission) {

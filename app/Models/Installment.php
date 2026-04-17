@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
-class Installment extends AppBaseModel
+class Installment extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -32,64 +34,68 @@ class Installment extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'amount' => 'decimal:4',
+        'due_date' => 'date',
+        'paid_date' => 'date',
+    ];
+
+    /**
+     * Configuration for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'id' => 'integer',
-            'amount' => 'float',
-            'due_date' => 'date',
-            'paid_date' => 'date',
-            'days_limit' => 'integer',
-            'sale_invoice_id' => 'integer',
-            'customer_id' => 'integer',
-            'created_by' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
     }
 
     /**
-     * Scope a query to only include overdue installments.
+     * Scope for overdue installments.
      */
-    public function scopeOverdue(Builder $query): Builder
+    public function scopeOverdue($query)
     {
-        return $query->where('due_date', '<', Carbon::today())
-                     ->where('status', 'not_paid');
+        return $query->where('due_date', '<', now()->toDateString())
+            ->where('status', 'not_paid');
     }
 
     /**
-     * Scope a query to only include installments due this week.
+     * Scope for installments due this week.
      */
-    public function scopeDueThisWeek(Builder $query): Builder
+    public function scopeDueThisWeek($query)
     {
         return $query->whereBetween('due_date', [
-            Carbon::today(),
-            Carbon::today()->addDays(7)
+            now()->startOfWeek()->toDateString(),
+            now()->endOfWeek()->toDateString()
         ]);
     }
 
     /**
-     * Get the sale invoice associated with the installment.
+     * Scope for customer-specific installments.
      */
+    public function scopeForCustomer($query, int $customerId)
+    {
+        return $query->where('customer_id', $customerId);
+    }
+
+    /**
+     * Relations
+     */
+
     public function saleInvoice(): BelongsTo
     {
         return $this->belongsTo(SaleInvoice::class);
     }
 
-    /**
-     * Get the customer associated with the installment.
-     */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
     }
 
-    /**
-     * Get the user who created the installment.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

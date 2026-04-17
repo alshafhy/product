@@ -4,15 +4,18 @@ namespace App\Policies;
 
 use App\Models\Installment;
 use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class InstallmentPolicy
 {
+    use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('installment.view');
+        return $user->hasPermissionTo('installment.view');
     }
 
     /**
@@ -20,7 +23,7 @@ class InstallmentPolicy
      */
     public function view(User $user, Installment $installment): bool
     {
-        return $user->can('installment.view');
+        return $user->hasPermissionTo('installment.view');
     }
 
     /**
@@ -28,7 +31,7 @@ class InstallmentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('installment.create');
+        return $user->hasPermissionTo('installment.create');
     }
 
     /**
@@ -36,14 +39,14 @@ class InstallmentPolicy
      */
     public function update(User $user, Installment $installment): bool
     {
-        return $user->can('installment.edit');
+        return $user->hasPermissionTo('installment.edit');
     }
 
     /**
-     * Determine whether the user can collect/pay the installment.
+     * Determine whether the user can collect/mark as paid.
      */
     public function collect(User $user, Installment $installment): bool
     {
-        return $user->can('installment.collect');
+        return $user->hasPermissionTo('installment.collect');
     }
 }

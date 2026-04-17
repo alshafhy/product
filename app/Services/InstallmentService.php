@@ -5,93 +5,105 @@ namespace App\Services;
 use App\Models\Installment;
 use App\Models\SaleInvoice;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Exception;
+use Illuminate\Support\Facades\DB;
 
-class InstallmentService extends BaseService
+class InstallmentService
 {
-    private int $scale = 4;
-
     /**
      * Generate an installment schedule for a sale invoice.
      */
-    public function generateSchedule(SaleInvoice $invoice, int $count, string $firstDue): Collection
+    public function generateSchedule(SaleInvoice $invoice, int $count, Carbon $firstDue): Collection
     {
-        if ($count <= 0) {
-            throw new Exception("Installment count must be greater than zero.");
-        }
+        return DB::transaction(function () use ($invoice, $count, $firstDue) {
+            $totalAmount = (string) $invoice->remaining;
+            
+            // Calculate equal installment amount
+            $installmentAmount = bcdiv($totalAmount, (string) $count, 4);
+            
+            // Calculate the remainder to add to the last installment
+            // remainder = total - (installmentAmount * (count - 1))
+            $sumOfFirstNMinus1 = bcmul($installmentAmount, (string) ($count - 1), 4);
+            $lastInstallmentAmount = bcsub($totalAmount, $sumOfFirstNMinus1, 4);
 
-        $remainingAmount = (string) $invoice->remaining;
-        
-        // Calculate base amount per installment
-        $baseAmount = bcdiv($remainingAmount, (string) $count, $this->scale);
-        
-        // Calculate the remainder that might be lost due to division rounding
-        $calculatedTotal = bcmul($baseAmount, (string) $count, $this->scale);
-        $diff = bcsub($remainingAmount, $calculatedTotal, $this->scale);
+            $installments = collect();
 
-        $installments = new Collection();
-        $startDate = Carbon::parse($firstDue);
-
-        return DB::transaction(function () use ($invoice, $count, $baseAmount, $diff, $startDate, $installments) {
             for ($i = 0; $i < $count; $i++) {
-                $amount = ($i === 0) ? bcadd($baseAmount, $diff, $this->scale) : $baseAmount;
+                $isLast = ($i === $count - 1);
+                $amount = $isLast ? $lastInstallmentAmount : $installmentAmount;
                 
-                $installment = Installment::create([
+                $installments->push(Installment::create([
                     'sale_invoice_id' => $invoice->id,
                     'customer_id' => $invoice->customer_id,
                     'amount' => $amount,
-                    'due_date' => $startDate->copy()->addMonths($i),
+                    'due_date' => $firstDue->copy()->addMonths($i)->toDateString(),
                     'status' => 'not_paid',
-                    'created_by' => auth()->id() ?? $invoice->created_by,
-                ]);
-                
-                $installments->push($installment);
+                    'created_by' => auth()->id(),
+                ]));
             }
-            
+
             return $installments;
         });
     }
 
     /**
-     * Mark an installment as paid.
+     * Mark an installment as paid and record in treasury.
      */
     public function markAsPaid(Installment $installment, string $paidDate): void
     {
         DB::transaction(function () use ($installment, $paidDate) {
             $installment->update([
                 'status' => 'paid',
-                'paid_date' => Carbon::parse($paidDate),
-                'payment_type' => 'cash', // Default
+                'paid_date' => $paidDate,
             ]);
 
-            // Update associated invoice 'paid' and 'remaining' amounts
-            if ($installment->saleInvoice) {
-                $invoice = $installment->saleInvoice;
-                $newPaid = bcadd((string)$invoice->paid, (string)$installment->amount, $this->scale);
-                $newRemaining = bcsub((string)$invoice->remaining, (string)$installment->amount, $this->scale);
-                
-                $invoice->update([
-                    'paid' => $newPaid,
-                    'remaining' => $newRemaining,
-                ]);
+            // record in treasury box
+            $treasuryService = app(TreasuryService::class);
+            $treasuryService->deposit([
+                'branch_id' => $installment->saleInvoice->branch_id,
+                'user_id' => auth()->id(),
+                'amount' => (string) $installment->amount,
+                'reference_type' => Installment::class,
+                'reference_id' => $installment->id,
+                'description' => "Installment payment for Invoice #{$installment->saleInvoice->invoice_number}",
+                'transacted_at' => $paidDate,
+                'created_by' => auth()->id(),
+            ]);
 
-                // Also potentially handle customer balance decrement if handleDebt logic was used
-                if ($invoice->customer) {
-                    $invoice->customer->decrement('current_balance', $installment->amount);
-                }
+            // Update customer balance if necessary
+            if ($installment->customer) {
+                $installment->customer->recalculateBalance();
             }
         });
     }
 
     /**
-     * Get report of overdue installments for a specific branch.
+     * Get report of all overdue installments.
      */
     public function getOverdueReport(int $branchId): Collection
     {
-        return Installment::whereHas('saleInvoice', function ($query) use ($branchId) {
-            $query->where('branch_id', $branchId);
-        })->overdue()->get();
+        return Installment::whereHas('saleInvoice', function($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            })
+            ->overdue()
+            ->with(['customer', 'saleInvoice'])
+            ->get();
+    }
+
+    /**
+     * Get total overdue amount for a customer using BCMath.
+     */
+    public function getTotalOverdue(int $customerId): string
+    {
+        $overdueInstallments = Installment::forCustomer($customerId)
+            ->overdue()
+            ->get();
+
+        $total = '0';
+        foreach ($overdueInstallments as $installment) {
+            $total = bcadd($total, (string) $installment->amount, 4);
+        }
+
+        return $total;
     }
 }
