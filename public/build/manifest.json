@@ -1,6 +1,6 @@
 {
   "resources/assets/scss/style-rtl.scss": {
-    "file": "assets/style-rtl-CoLbI96M.css",
+    "file": "assets/style-rtl-3NGOYkrU.css",
     "src": "resources/assets/scss/style-rtl.scss",
     "isEntry": true
   },
@@ -16,12 +16,12 @@
     "isEntry": true
   },
   "resources/scss/core.scss": {
-    "file": "assets/core-DFlh-UV0.css",
+    "file": "assets/core-BL_Cl_Dc.css",
     "src": "resources/scss/core.scss",
     "isEntry": true
   },
   "resources/scss/overrides.scss": {
-    "file": "assets/overrides-DQMJDSFA.css",
+    "file": "assets/overrides-DFkWY5fA.css",
     "src": "resources/scss/overrides.scss",
     "isEntry": true
   }

@@ -45,10 +45,4 @@
 @vite(['resources/scss/overrides.scss'])
 
 <!-- BEGIN: Custom CSS-->
-
-@if ($configData['direction'] === 'rtl' && isset($configData['direction']))
-  @vite(['resources/assets/scss/style-rtl.scss'])
-@else
-  {{-- user custom styles --}}
-  @vite(['resources/assets/scss/style.scss'])
-@endif
+@vite(['resources/assets/scss/style.scss'])

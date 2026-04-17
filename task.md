@@ -1,2 +1,6 @@
-- [x] FIX 1: Update sidebar positioning CSS in `resources/sass/app.scss`
-- [x] VERIFY: Run `npm run build`
+- [ ] INSTALL: `postcss-rtlcss` dependency
+- [ ] CONFIGURE: Create `postcss.config.cjs`
+- [ ] CLEANUP: Remove manual nuclear fixes from `overrides.scss`
+- [ ] UPDATE: Simplify `styles.blade.php` asset loading
+- [ ] BUILD: Run `npm run build`
+- [ ] VERIFY: Check UI in browser (LTR and RTL)
