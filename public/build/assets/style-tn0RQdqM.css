@@ -1,8 +1,16 @@
 /* RTL Layout Fix
  * core.css positions navbar with left:260px; right:0 (LTR/left sidebar).
  * For RTL (right-side sidebar) we flip: right:260px; left:0.
+ * NOTE: Do NOT override width or transform — those are controlled by menu-expanded/collapsed JS classes.
  */
 
+/* Sidebar: only override left/right position, not width or transform */
+html[dir="rtl"] .main-menu {
+    left: auto !important;
+    right: 0 !important;
+}
+
+/* Navbar: flip left/right for right-side sidebar (expanded state) */
 html[dir="rtl"] .header-navbar.fixed-top,
 html[dir="rtl"] .header-navbar.floating-nav {
     left: 0 !important;
@@ -19,14 +27,11 @@ html[dir="rtl"] .header-navbar.navbar-static-top {
     width: calc(100vw - (100vw - 100%) - 260px) !important;
 }
 
-/* Collapsed sidebar (80px) navbar adjustments */
+/* Navbar: collapsed sidebar state (80px) */
 html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.fixed-top,
 html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.floating-nav {
     left: 0 !important;
     right: 80px !important;
-}
-
-html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-navbar.floating-nav {
     width: calc(100vw - (100vw - 100%) - 4.4rem - 74px) !important;
 }
 
@@ -36,14 +41,6 @@ html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-nav
     width: calc(100vw - (100vw - 100%) - 74px) !important;
 }
 
-/* Sidebar position (right side for RTL) */
-html[dir="rtl"] .main-menu {
-    left: auto !important;
-    right: 0 !important;
-    width: 260px !important;
-    transform: translateZ(0) !important;
-}
-
 /* Content margin for RTL (offset from right sidebar) */
 html[dir="rtl"] .app-content,
 html[dir="rtl"] .content {
@@ -51,20 +48,36 @@ html[dir="rtl"] .content {
     margin-left: 0 !important;
 }
 
+/* Content margin: collapsed sidebar state */
 html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .app-content,
 html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .footer {
     margin-right: 80px !important;
     margin-left: 0 !important;
 }
 
+/* Footer margins */
 html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-expanded .footer {
     margin-left: 0 !important;
     margin-right: 260px !important;
 }
 
-/* Ensure menu text is visible in RTL */
-html[dir="rtl"] .main-menu .navbar-header .brand-text,
-html[dir="rtl"] .main-menu ul li a span {
+/* Ensure menu text stays visible in expanded RTL state */
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-expanded .main-menu .navbar-header .brand-text,
+html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-expanded .main-menu ul li a span {
     display: inline !important;
     opacity: 1 !important;
+}
+
+/* Mobile: RTL menu slides off to the right (not left) */
+@media (max-width: 767.98px) {
+    html[dir="rtl"] .main-menu {
+        transform: translate3d(240px, 0, 0) !important;
+    }
+    html[dir="rtl"] .menu-open .main-menu {
+        transform: translate3d(0, 0, 0) !important;
+    }
+    html[dir="rtl"] .app-content,
+    html[dir="rtl"] .content {
+        margin-right: 0 !important;
+    }
 }
