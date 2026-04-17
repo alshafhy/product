@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Web Middleware Group
         $middleware->web(append: [
-            \App\Http\Middleware\LocaleMiddleware::class,
+            \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\CheckPassChange::class,
         ]);
 

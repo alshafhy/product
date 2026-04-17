@@ -4,6 +4,7 @@ use App\Helpers\Helper;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\AssayFormController;
 use App\Http\Controllers\AssayItemController;
 use App\Http\Controllers\StaterkitController;
@@ -22,6 +23,8 @@ use Laragear\WebAuthn\Http\Routes as WebAuthn;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::get('locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
 Route::get('/underMaintenance', [App\Http\Controllers\HomeController::class, 'underMaintenance'])->name('mm');
 Route::get('/pageComingSoon', [App\Http\Controllers\HomeController::class, 'pageComingSoon'])->name('pageComingSoon');

@@ -8,8 +8,8 @@ $configData = Helper::applClasses();
 @endphp
 
 <html class="loading {{ ($configData['theme'] === 'light') ? '' : $configData['layoutTheme']}}"
-lang="@if(session()->has('locale')){{session()->get('locale')}}@else{{$configData['defaultLanguage']}}@endif"
-data-textdirection="{{ env('MIX_CONTENT_DIRECTION') === 'rtl' ? 'rtl' : 'ltr' }}"
+lang="{{ app()->getLocale() }}"
+data-textdirection="{{ $dir ?? 'rtl' }}"
 @if($configData['theme'] === 'dark') data-layout="dark-layout" @endif>
 
 <head>
