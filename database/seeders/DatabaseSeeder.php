@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             PeopleSeeder::class,
             SaleInvoicePermissionsSeeder::class,
+            PurchaseInvoicePermissionsSeeder::class,
         ]);
     }
 }
