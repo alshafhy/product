@@ -2,216 +2,186 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
-class ReportService extends BaseService
+class ReportService
 {
-    private int $scale = 4;
-
     /**
-     * Get a summary of sales performance.
+     * Get sales summary for a date range and optional branch.
      */
     public function salesSummary(Carbon $from, Carbon $to, ?int $branchId = null): array
     {
         $query = DB::table('sale_invoices')
             ->whereBetween('invoiced_at', [$from, $to])
-            ->whereNull('deleted_at');
+            ->where('status', 'completed');
 
         if ($branchId) {
             $query->where('branch_id', $branchId);
         }
 
-        $invoices = $query->get(['total', 'cost', 'profit', 'discount']);
-
-        $totalSales = '0.0000';
-        $totalCost = '0.0000';
-        $totalProfit = '0.0000';
-        $totalDiscount = '0.0000';
-
-        foreach ($invoices as $invoice) {
-            $totalSales = bcadd($totalSales, (string) $invoice->total, $this->scale);
-            $totalCost = bcadd($totalCost, (string) $invoice->cost, $this->scale);
-            $totalProfit = bcadd($totalProfit, (string) $invoice->profit, $this->scale);
-            $totalDiscount = bcadd($totalDiscount, (string) $invoice->discount, $this->scale);
-        }
+        $summary = $query->selectRaw('
+            SUM(total) as total_sales,
+            SUM(cost) as total_cost,
+            SUM(profit) as total_profit,
+            SUM(discount) as total_discount,
+            COUNT(id) as invoice_count
+        ')->first();
 
         return [
-            'total_sales' => (float) $totalSales,
-            'total_cost' => (float) $totalCost,
-            'total_profit' => (float) $totalProfit,
-            'total_discount' => (float) $totalDiscount,
-            'invoice_count' => $invoices->count(),
+            'total_sales' => (string) ($summary->total_sales ?? '0'),
+            'total_cost' => (string) ($summary->total_cost ?? '0'),
+            'total_profit' => (string) ($summary->total_profit ?? '0'),
+            'total_discount' => (string) ($summary->total_discount ?? '0'),
+            'invoice_count' => (int) ($summary->invoice_count ?? 0),
         ];
     }
 
     /**
-     * Get top selling products by quantity.
+     * Get top selling products.
      */
     public function topProducts(Carbon $from, Carbon $to, int $limit = 10): Collection
     {
         return DB::table('sale_invoice_items')
             ->join('sale_invoices', 'sale_invoice_items.sale_invoice_id', '=', 'sale_invoices.id')
-            ->select(
-                'sale_invoice_items.product_id',
-                'sale_invoice_items.product_name',
-                'sale_invoice_items.code_id',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(line_total) as total_revenue')
-            )
             ->whereBetween('sale_invoices.invoiced_at', [$from, $to])
-            ->whereNull('sale_invoices.deleted_at')
+            ->where('sale_invoices.status', 'completed')
+            ->select('sale_invoice_items.product_id', 'sale_invoice_items.product_name', 'sale_invoice_items.code_id')
+            ->selectRaw('SUM(sale_invoice_items.quantity) as total_quantity')
+            ->selectRaw('SUM(sale_invoice_items.line_total) as total_revenue')
             ->groupBy('sale_invoice_items.product_id', 'sale_invoice_items.product_name', 'sale_invoice_items.code_id')
-            ->orderBy('total_quantity', 'desc')
+            ->orderByDesc('total_quantity')
             ->limit($limit)
             ->get();
     }
 
     /**
-     * Get sales performance by cashier (user).
+     * Get performance report for all cashiers.
      */
     public function cashierPerformance(Carbon $from, Carbon $to): Collection
     {
         return DB::table('sale_invoices')
             ->join('users', 'sale_invoices.user_id', '=', 'users.id')
-            ->select(
-                'users.id',
-                'users.name',
-                DB::raw('COUNT(sale_invoices.id) as invoice_count'),
-                DB::raw('SUM(sale_invoices.total) as total_sales')
-            )
             ->whereBetween('sale_invoices.invoiced_at', [$from, $to])
-            ->whereNull('sale_invoices.deleted_at')
+            ->where('sale_invoices.status', 'completed')
+            ->select('users.id', 'users.name')
+            ->selectRaw('SUM(sale_invoices.total) as total_sales')
+            ->selectRaw('COUNT(sale_invoices.id) as invoice_count')
             ->groupBy('users.id', 'users.name')
-            ->orderBy('total_sales', 'desc')
+            ->orderByDesc('total_sales')
             ->get();
     }
 
     /**
-     * Get report of customer debts.
+     * Get customer debt report.
      */
     public function customerDebtReport(?int $customerId = null): Collection
     {
         $query = DB::table('customers')
-            ->select('id', 'name', 'phone', 'current_balance')
             ->where('current_balance', '>', 0)
-            ->whereNull('deleted_at');
+            ->select('id', 'name', 'phone', 'current_balance')
+            ->orderByDesc('current_balance');
 
         if ($customerId) {
             $query->where('id', $customerId);
         }
 
-        return $query->orderBy('current_balance', 'desc')->get();
+        return $query->get();
     }
 
     /**
-     * Get current stock levels with low stock alerts.
+     * Get stock report with low stock alerts.
      */
     public function stockReport(?int $categoryId = null): Collection
     {
         $query = DB::table('products')
-            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
             ->select(
                 'products.id',
                 'products.name',
                 'products.code_id',
                 'products.quantity',
+                'products.unit1',
                 'categories.name as category_name'
             )
-            ->whereNull('products.deleted_at');
+            ->selectRaw('CASE WHEN products.quantity <= 5 THEN 1 ELSE 0 END as low_stock_alert')
+            ->orderBy('products.quantity');
 
         if ($categoryId) {
             $query->where('products.category_id', $categoryId);
         }
 
-        return $query->get()->map(function ($product) {
-            $product->is_low_stock = $product->quantity <= 5;
-            return $product;
-        });
+        return $query->get();
     }
 
     /**
-     * Get movements (sales and purchases) for a specific product code.
+     * Get chronological movement for a specific product.
      */
     public function productMovement(string $codeId, Carbon $from, Carbon $to): array
     {
-        // 1. Fetch Sales
+        // 1. Get Sales
         $sales = DB::table('sale_invoice_items')
             ->join('sale_invoices', 'sale_invoice_items.sale_invoice_id', '=', 'sale_invoices.id')
-            ->select(
-                'sale_invoices.invoiced_at as date',
-                'sale_invoice_items.quantity as out_qty',
-                DB::raw('0 as in_qty'),
-                'sale_invoice_items.sell_price as price',
-                DB::raw("'Sale' as type"),
-                'sale_invoices.invoice_number as reference'
-            )
             ->where('sale_invoice_items.code_id', $codeId)
             ->whereBetween('sale_invoices.invoiced_at', [$from, $to])
-            ->whereNull('sale_invoices.deleted_at')
-            ->get();
+            ->select(
+                'sale_invoices.invoiced_at as date',
+                'sale_invoices.invoice_number as reference',
+                DB::raw("'sale' as movement_type")
+            )
+            ->selectRaw('sale_invoice_items.quantity as qty_out')
+            ->selectRaw('0 as qty_in')
+            ->selectRaw('sale_invoice_items.sell_price as price');
 
-        // 2. Fetch Purchases
+        // 2. Get Purchases
         $purchases = DB::table('purchase_invoice_items')
             ->join('purchase_invoices', 'purchase_invoice_items.purchase_invoice_id', '=', 'purchase_invoices.id')
-            ->select(
-                'purchase_invoices.invoiced_at as date',
-                DB::raw('0 as out_qty'),
-                'purchase_invoice_items.quantity as in_qty',
-                'purchase_invoice_items.buy_price as price',
-                DB::raw("'Purchase' as type"),
-                'purchase_invoices.invoice_number as reference'
-            )
             ->where('purchase_invoice_items.code_id', $codeId)
             ->whereBetween('purchase_invoices.invoiced_at', [$from, $to])
-            ->whereNull('purchase_invoices.deleted_at')
+            ->select(
+                'purchase_invoices.invoiced_at as date',
+                'purchase_invoices.invoice_number as reference',
+                DB::raw("'purchase' as movement_type")
+            )
+            ->selectRaw('0 as qty_out')
+            ->selectRaw('purchase_invoice_items.quantity as qty_in')
+            ->selectRaw('purchase_invoice_items.buy_price as price');
+
+        $movements = $sales->union($purchases)
+            ->orderBy('date')
             ->get();
 
-        // 3. Combine and sort
-        $movements = $sales->concat($purchases)->sortBy('date')->values();
-
-        return [
-            'code_id' => $codeId,
-            'movements' => $movements,
-            'summary' => [
-                'total_in' => $movements->sum('in_qty'),
-                'total_out' => $movements->sum('out_qty'),
-            ]
-        ];
+        return $movements->toArray();
     }
 
     /**
-     * Get a daily report for the treasury branch cash flow.
+     * Daily treasury flow report.
      */
     public function treasuryDailyReport(Carbon $date, int $branchId): array
     {
         $transactions = DB::table('treasury_transactions')
-            ->whereDate('transacted_at', $date)
             ->where('branch_id', $branchId)
-            ->whereNull('deleted_at')
-            ->get(['amount', 'type']);
+            ->whereDate('transacted_at', $date)
+            ->get();
 
-        $summary = [
-            'deposit' => '0.0000',
-            'withdrawal' => '0.0000',
-            'expense' => '0.0000',
-            'sale_receipt' => '0.0000',
-            'purchase_payment' => '0.0000',
-            'net_flow' => '0.0000',
-        ];
+        $in = '0';
+        $out = '0';
 
-        foreach ($transactions as $trans) {
-            $summary[$trans->type] = bcadd($summary[$trans->type], (string)$trans->amount, $this->scale);
+        foreach ($transactions as $tx) {
+            if (in_array($tx->type, ['deposit', 'sale_receipt'])) {
+                $in = bcadd($in, (string) $tx->amount, 4);
+            } else {
+                $out = bcadd($out, (string) $tx->amount, 4);
+            }
         }
 
-        // Net flow = (deposit + receipt) - (withdrawal + expense + payment)
-        $inflow = bcadd($summary['deposit'], $summary['sale_receipt'], $this->scale);
-        $outflow = bcadd($summary['withdrawal'], bcadd($summary['expense'], $summary['purchase_payment'], $this->scale), $this->scale);
-        
-        $summary['net_flow'] = bcsub($inflow, $outflow, $this->scale);
-
-        // Convert back to floats for reporting
-        return array_map('floatval', $summary);
+        return [
+            'date' => $date->toDateString(),
+            'total_in' => $in,
+            'total_out' => $out,
+            'net_flow' => bcsub($in, $out, 4),
+            'transaction_count' => $transactions->count(),
+        ];
     }
 }
