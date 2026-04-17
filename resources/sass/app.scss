@@ -15,72 +15,89 @@
 @import '@/scss/overrides.scss';
 @import '@/assets/scss/style.scss';
 
-// ─── RTL / LTR Direction Switching ───────────────────────
+// ─── RTL / LTR Direction Switching (NUCLEAR) ───────────────────────
 
-/* RTL → sidebar on RIGHT */
-html[dir="rtl"] .sidebar,
-.rtl .sidebar,
-.rtl-layout .sidebar {
-    right: 0 !important;
-    left: auto !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
-    border-right: none;
+.sidebar {
+  position: fixed !important;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-width, 260px);
+  z-index: 1040;
+
+  /* Default: right side for RTL */
+  right: 0;
+  left: auto;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: none;
 }
 
-/* LTR → sidebar on LEFT */
-html[dir="ltr"] .sidebar,
-.ltr .sidebar,
-.ltr-layout .sidebar {
-    left: 0 !important;
-    right: auto !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-    border-left: none;
+/* Override to LEFT only when LTR */
+html[dir="ltr"] .sidebar {
+  left: 0 !important;
+  right: auto !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: none;
 }
 
-/* Main wrapper/content margin to match */
-html[dir="rtl"] .main-wrapper,
-html[dir="rtl"] .main-content,
-.rtl .main-content,
-.rtl-layout .main-wrapper {
-    margin-right: var(--sidebar-width, 260px) !important;
-    margin-left: 0 !important;
+/* Main content: default RTL offset */
+.main-wrapper, 
+.main-content,
+.app-content {
+  margin-right: var(--sidebar-width, 260px) !important;
+  margin-left: 0 !important;
 }
 
+/* Override for LTR */
 html[dir="ltr"] .main-wrapper,
 html[dir="ltr"] .main-content,
-.ltr .main-content,
-.ltr-layout .main-wrapper {
-    margin-left: var(--sidebar-width, 260px) !important;
-    margin-right: 0 !important;
+html[dir="ltr"] .app-content {
+  margin-left: var(--sidebar-width, 260px) !important;
+  margin-right: 0 !important;
 }
 
 /* Collapsed state */
-html[dir="rtl"] body[data-sidebar="collapsed"] .main-wrapper,
-html[dir="rtl"] body[data-sidebar="collapsed"] .main-content,
-html[dir="rtl"].sidebar-collapsed .main-content {
-    margin-right: var(--sidebar-collapsed-width, 60px) !important;
-    margin-left: 0 !important;
+body[data-sidebar="collapsed"] .main-wrapper,
+body[data-sidebar="collapsed"] .main-content,
+body[data-sidebar="collapsed"] .app-content,
+html.sidebar-collapsed .main-content {
+  margin-right: var(--sidebar-collapsed-width, 80px) !important;
+  margin-left: 0 !important;
 }
 
 html[dir="ltr"] body[data-sidebar="collapsed"] .main-wrapper,
 html[dir="ltr"] body[data-sidebar="collapsed"] .main-content,
+html[dir="ltr"] body[data-sidebar="collapsed"] .app-content,
 html[dir="ltr"].sidebar-collapsed .main-content {
-    margin-left: var(--sidebar-collapsed-width, 60px) !important;
-    margin-right: 0 !important;
+  margin-left: var(--sidebar-collapsed-width, 80px) !important;
+  margin-right: 0 !important;
 }
 
-/* Mobile: no margin regardless of direction */
+/* Mobile: no offset either direction */
 @media (max-width: 992px) {
-    html[dir="rtl"] .main-wrapper,
-    html[dir="rtl"] .main-content,
-    html[dir="ltr"] .main-wrapper,
-    html[dir="ltr"] .main-content,
-    .rtl-layout .main-wrapper,
-    .ltr-layout .main-wrapper,
-    .rtl .main-content,
-    .ltr .main-content {
-        margin: 0 !important;
-    }
+  .sidebar {
+    right: 0 !important;
+    left: auto !important;
+    transform: translateX(100%);
+  }
+  
+  html[dir="ltr"] .sidebar {
+    left: 0 !important;
+    right: auto !important;
+    transform: translateX(-100%) !important;
+  }
+  
+  .main-wrapper,
+  .main-content,
+  .app-content,
+  html[dir="ltr"] .main-wrapper,
+  html[dir="ltr"] .main-content,
+  html[dir="ltr"] .app-content {
+    margin: 0 !important;
+  }
+  
+  body.sidebar-open .sidebar {
+    transform: translateX(0) !important;
+  }
 }
 
 // Topbar direction

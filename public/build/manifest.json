@@ -1,4 +1,9 @@
 {
+  "resources/assets/scss/style-rtl.scss": {
+    "file": "assets/style-rtl-CoLbI96M.css",
+    "src": "resources/assets/scss/style-rtl.scss",
+    "isEntry": true
+  },
   "resources/assets/scss/style.scss": {
     "file": "assets/style-tn0RQdqM.css",
     "src": "resources/assets/scss/style.scss",
@@ -16,7 +21,7 @@
     "isEntry": true
   },
   "resources/scss/overrides.scss": {
-    "file": "assets/overrides-DFkWY5fA.css",
+    "file": "assets/overrides-DQMJDSFA.css",
     "src": "resources/scss/overrides.scss",
     "isEntry": true
   }

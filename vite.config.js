@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/scss/core.scss',
                 'resources/scss/overrides.scss',
                 'resources/assets/scss/style.scss',
+                'resources/assets/scss/style-rtl.scss',
             ],
             refresh: true,
         }),
