@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ShopSetting extends AppBaseModel
+class ShopSetting extends Model
 {
+    use HasFactory;
+
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -22,22 +26,17 @@ class ShopSetting extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'id' => 'integer',
-            'branch_id' => 'integer',
-            'print_settings' => 'array',
-            'invoice_settings' => 'array',
-        ];
-    }
+    protected $casts = [
+        'print_settings' => 'array',
+        'invoice_settings' => 'array',
+    ];
 
     /**
-     * Get the branch associated with the shop settings.
+     * Get the branch that owns the shop settings.
      */
     public function branch(): BelongsTo
     {

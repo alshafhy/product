@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class UnitOfMeasure extends AppBaseModel
+class UnitOfMeasure extends Model
 {
-    use SoftDeletes, LogsActivity;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
      * The table associated with the model.
@@ -18,7 +20,7 @@ class UnitOfMeasure extends AppBaseModel
     protected $table = 'units_of_measure';
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -28,27 +30,12 @@ class UnitOfMeasure extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'id' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
-    }
-
-    /**
-     * Get the options for logging activity.
+     * Configuration for activity logging.
      */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->useLogName('UnitOfMeasure')
-            ->logOnly(['name', 'ar_name'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+            ->logFillable()
+            ->logOnlyDirty();
     }
 }
