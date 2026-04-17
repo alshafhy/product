@@ -24,7 +24,9 @@ use Laragear\WebAuthn\Http\Routes as WebAuthn;
 |
 */
 
-Route::get('locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+Route::get('locale/{locale}', [LocaleController::class, 'switch'])
+    ->name('locale.switch')
+    ->where('locale', 'ar|en');
 
 Route::get('/underMaintenance', [App\Http\Controllers\HomeController::class, 'underMaintenance'])->name('mm');
 Route::get('/pageComingSoon', [App\Http\Controllers\HomeController::class, 'pageComingSoon'])->name('pageComingSoon');

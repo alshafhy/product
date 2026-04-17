@@ -3,17 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class LocaleController extends Controller
 {
-    public function switch(string $locale): RedirectResponse
+    public function switch(Request $request, string $locale): RedirectResponse
     {
-        if (!in_array($locale, config('app.available_locales', ['ar', 'en']))) {
-            abort(400);
-        }
+        // Validate
+        abort_if(! in_array($locale, ['ar', 'en']), 404);
 
-        session(['locale' => $locale]);
+        // Derive direction
+        $direction = $locale === 'ar' ? 'rtl' : 'ltr';
 
-        return redirect()->back();
+        // Persist in session
+        session([
+            'locale'    => $locale,
+            'direction' => $direction,
+        ]);
+
+        return redirect()->back()->withHeaders([
+            'Cache-Control' => 'no-store, no-cache',
+        ]);
     }
 }

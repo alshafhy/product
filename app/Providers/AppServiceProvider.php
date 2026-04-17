@@ -2,31 +2,30 @@
 
 namespace App\Providers;
 
-
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\ServiceProvider;
+use App\Http\ViewComposers\MenuComposer;
+use App\Observers\PermissionObserver;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot()
+    public function boot(): void
     {
         if (app()->environment('production') || config('app.env') === 'production') {
             URL::forceScheme('https');
         }
+
+        View::composer('panels.sidebar', MenuComposer::class);
+
+        Permission::observe(PermissionObserver::class);
+        Role::observe(PermissionObserver::class);
     }
 }
