@@ -65,99 +65,78 @@
     {{-- @include('panels/navbar-partials/dropdown-cart') --}}
     @include('panels/navbar-partials/search')
     {{-- Language & Direction Switcher --}}
+    {{-- Language Switcher --}}
     <div class="dropdown d-inline-block ms-2">
-    
-        {{-- Toggle Button --}}
-        <button class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-2"
-                type="button"
-                id="langDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                title="{{ __('layout.language_direction') }}">
-    
-            {{-- Flag + current locale label --}}
+
+      {{-- Toggle Button — shows ONLY flag + language name --}}
+      <button class="btn btn-sm btn-outline-secondary dropdown-toggle 
+                     d-flex align-items-center gap-2"
+              type="button"
+              id="langDropdown"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+              title="{{ __('layout.language_direction') }}">
+
+        @if(($currentLocale ?? 'ar') === 'ar')
+          {{-- Saudi Arabia flag emoji + label --}}
+          <span style="font-size:1.2rem; line-height:1;">🇸🇦</span>
+          <span class="d-none d-sm-inline fw-semibold" 
+                style="font-size:0.85rem;">{{ __('layout.switch_to_arabic') }}</span>
+        @else
+          {{-- UK flag emoji + label --}}
+          <span style="font-size:1.2rem; line-height:1;">🇬🇧</span>
+          <span class="d-none d-sm-inline fw-semibold"
+                style="font-size:0.85rem;">{{ __('layout.switch_to_english') }}</span>
+        @endif
+
+      </button>
+
+      {{-- Dropdown Menu --}}
+      <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1"
+          aria-labelledby="langDropdown"
+          style="min-width:180px;">
+
+        <li>
+          <h6 class="dropdown-header small text-muted">
+            <i class="bi bi-translate me-1"></i>
+            {{ __('layout.choose_language') }}
+          </h6>
+        </li>
+        <li><hr class="dropdown-divider my-1"></li>
+
+        {{-- Arabic option --}}
+        <li>
+          <a href="{{ route('locale.switch', 'ar') }}"
+             class="dropdown-item d-flex align-items-center gap-3 py-2
+                    {{ ($currentLocale ?? 'ar') === 'ar' ? 'active' : '' }}">
+            <span style="font-size:1.3rem;">🇸🇦</span>
+            <div>
+              <div class="fw-semibold" style="font-size:0.9rem;">{{ __('layout.switch_to_arabic') }}</div>
+              <div class="text-muted" style="font-size:0.75rem;">Arabic</div>
+            </div>
             @if(($currentLocale ?? 'ar') === 'ar')
-                <span class="fi fi-eg" style="width:20px;height:14px;">🇪🇬</span>
-                <span class="fw-semibold">AR</span>
-                <span class="badge bg-primary ms-1" style="font-size:10px;">RTL</span>
-            @else
-                <span class="fi fi-gb" style="width:20px;height:14px;">🇬🇧</span>
-                <span class="fw-semibold">EN</span>
-                <span class="badge bg-secondary ms-1" style="font-size:10px;">LTR</span>
+              <i class="bi bi-check2-circle text-success ms-auto"></i>
             @endif
-    
-        </button>
-    
-        {{-- Dropdown Menu --}}
-        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" 
-            aria-labelledby="langDropdown"
-            style="min-width: 200px;">
-    
-            {{-- Header label --}}
-            <li>
-                <h6 class="dropdown-header d-flex align-items-center gap-2">
-                    <i class="bi bi-translate"></i>
-                    {{ __('layout.choose_language') }}
-                </h6>
-            </li>
-            <li><hr class="dropdown-divider my-1"></li>
-    
-            {{-- Arabic RTL option --}}
-            <li>
-                <a class="dropdown-item d-flex align-items-center justify-content-between py-2
-                           {{ ($currentLocale ?? 'ar') === 'ar' ? 'active fw-bold' : '' }}"
-                   href="{{ route('locale.switch', 'ar') }}">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fi fi-eg">🇪🇬</span>
-                        <div>
-                            <div class="fw-semibold">العربية</div>
-                            <small class="text-muted">Arabic</small>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column align-items-end gap-1">
-                        <span class="badge bg-primary" style="font-size:10px;">RTL</span>
-                        @if(($currentLocale ?? 'ar') === 'ar')
-                            <i class="bi bi-check2 text-success"></i>
-                        @endif
-                    </div>
-                </a>
-            </li>
-    
-            {{-- English LTR option --}}
-            <li>
-                <a class="dropdown-item d-flex align-items-center justify-content-between py-2
-                           {{ ($currentLocale ?? 'ar') === 'en' ? 'active fw-bold' : '' }}"
-                   href="{{ route('locale.switch', 'en') }}">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fi fi-gb">🇬🇧</span>
-                        <div>
-                            <div class="fw-semibold">English</div>
-                            <small class="text-muted">الإنجليزية</small>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column align-items-end gap-1">
-                        <span class="badge bg-secondary" style="font-size:10px;">LTR</span>
-                        @if(($currentLocale ?? 'ar') === 'en')
-                            <i class="bi bi-check2 text-success"></i>
-                        @endif
-                    </div>
-                </a>
-            </li>
-    
-            <li><hr class="dropdown-divider my-1"></li>
-    
-            {{-- Direction info row --}}
-            <li class="px-3 py-2">
-                <small class="text-muted d-flex align-items-center gap-2">
-                    <i class="bi bi-arrow-left-right"></i>
-                    {{ __('layout.current_direction') }}:
-                    <span class="badge {{ ($currentDir ?? 'rtl') === 'rtl' ? 'bg-primary' : 'bg-secondary' }}">
-                        {{ strtoupper($currentDir ?? 'rtl') }}
-                    </span>
-                </small>
-            </li>
-    
-        </ul>
+          </a>
+        </li>
+
+        {{-- English option --}}
+        <li>
+          <a href="{{ route('locale.switch', 'en') }}"
+             class="dropdown-item d-flex align-items-center gap-3 py-2
+                    {{ ($currentLocale ?? 'ar') === 'en' ? 'active' : '' }}">
+            <span style="font-size:1.3rem;">🇬🇧</span>
+            <div>
+              <div class="fw-semibold" style="font-size:0.9rem;">{{ __('layout.switch_to_english') }}</div>
+              <div class="text-muted" style="font-size:0.75rem;">الإنجليزية</div>
+            </div>
+            @if(($currentLocale ?? 'ar') === 'en')
+              <i class="bi bi-check2-circle text-success ms-auto"></i>
+            @endif
+          </a>
+        </li>
+
+      </ul>
     </div>
     @include('panels/navbar-partials/dropdown-user')
     

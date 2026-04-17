@@ -17,41 +17,70 @@
 
 // ─── RTL / LTR Direction Switching ───────────────────────
 
-// Sidebar position
-html.rtl .sidebar {
-    right: 0;
-    left: auto;
-    border-left: 1px solid var(--bs-border-color);
+/* RTL → sidebar on RIGHT */
+html[dir="rtl"] .sidebar,
+.rtl .sidebar,
+.rtl-layout .sidebar {
+    right: 0 !important;
+    left: auto !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
     border-right: none;
 }
 
-html.ltr .sidebar {
-    left: 0;
-    right: auto;
-    border-right: 1px solid var(--bs-border-color);
+/* LTR → sidebar on LEFT */
+html[dir="ltr"] .sidebar,
+.ltr .sidebar,
+.ltr-layout .sidebar {
+    left: 0 !important;
+    right: auto !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
     border-left: none;
 }
 
-// Main content offset
-html.rtl .main-content {
-    margin-right: var(--sidebar-width, 260px);
-    margin-left: 0;
+/* Main wrapper/content margin to match */
+html[dir="rtl"] .main-wrapper,
+html[dir="rtl"] .main-content,
+.rtl .main-content,
+.rtl-layout .main-wrapper {
+    margin-right: var(--sidebar-width, 260px) !important;
+    margin-left: 0 !important;
 }
 
-html.ltr .main-content {
-    margin-left: var(--sidebar-width, 260px);
-    margin-right: 0;
+html[dir="ltr"] .main-wrapper,
+html[dir="ltr"] .main-content,
+.ltr .main-content,
+.ltr-layout .main-wrapper {
+    margin-left: var(--sidebar-width, 260px) !important;
+    margin-right: 0 !important;
 }
 
-// Collapsed sidebar offset
-html.rtl.sidebar-collapsed .main-content {
-    margin-right: var(--sidebar-collapsed-width, 60px);
-    margin-left: 0;
+/* Collapsed state */
+html[dir="rtl"] body[data-sidebar="collapsed"] .main-wrapper,
+html[dir="rtl"] body[data-sidebar="collapsed"] .main-content,
+html[dir="rtl"].sidebar-collapsed .main-content {
+    margin-right: var(--sidebar-collapsed-width, 60px) !important;
+    margin-left: 0 !important;
 }
 
-html.ltr.sidebar-collapsed .main-content {
-    margin-left: var(--sidebar-collapsed-width, 60px);
-    margin-right: 0;
+html[dir="ltr"] body[data-sidebar="collapsed"] .main-wrapper,
+html[dir="ltr"] body[data-sidebar="collapsed"] .main-content,
+html[dir="ltr"].sidebar-collapsed .main-content {
+    margin-left: var(--sidebar-collapsed-width, 60px) !important;
+    margin-right: 0 !important;
+}
+
+/* Mobile: no margin regardless of direction */
+@media (max-width: 992px) {
+    html[dir="rtl"] .main-wrapper,
+    html[dir="rtl"] .main-content,
+    html[dir="ltr"] .main-wrapper,
+    html[dir="ltr"] .main-content,
+    .rtl-layout .main-wrapper,
+    .ltr-layout .main-wrapper,
+    .rtl .main-content,
+    .ltr .main-content {
+        margin: 0 !important;
+    }
 }
 
 // Topbar direction

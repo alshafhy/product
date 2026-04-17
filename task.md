@@ -1,0 +1,4 @@
+- [ ] FIX 1: Update sidebar positioning CSS in `resources/sass/app.scss`
+- [ ] FIX 2: Replace language switcher in `resources/views/panels/navbar.blade.php`
+- [ ] FIX 3: Remove standalone RTL/LTR badges in `resources/views/panels/navbar.blade.php`
+- [ ] VERIFY: Run `npm run build`
