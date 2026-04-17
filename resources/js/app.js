@@ -27,3 +27,22 @@ window.bootstrap = bootstrap;
     localStorage.setItem('cashpos_dir',  dir);
     localStorage.setItem('cashpos_lang', lang);
 })();
+
+// Sidebar expanded by default - BUG 1 FIX
+const STORAGE_KEY = 'cashpos_sidebar_state';
+const isMobile = () => window.innerWidth < 992;
+const applyDesktopState = (state) => {
+    if (state === 'collapsed') {
+        document.body.setAttribute('data-sidebar', 'collapsed');
+        document.documentElement.classList.add('sidebar-collapsed');
+    } else {
+        document.body.removeAttribute('data-sidebar');
+        document.documentElement.classList.remove('sidebar-collapsed');
+    }
+};
+
+if (!isMobile()) {
+    // Default to expanded, only use saved state if explicitly set
+    const saved = localStorage.getItem(STORAGE_KEY);
+    applyDesktopState(saved ?? 'expanded');
+}

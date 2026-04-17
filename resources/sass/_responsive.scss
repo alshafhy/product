@@ -1,0 +1,114 @@
+/* Sidebar Responsive & RTL Layout Fixes */
+
+body,
+body[data-sidebar="expanded"] {
+  .sidebar { width: var(--sidebar-width, 260px) !important; }
+  .sidebar-brand-text,
+  .nav-link span,
+  .sidebar-group-label { 
+    opacity: 1 !important; 
+    width: auto !important;
+    overflow: visible !important;
+  }
+  &.rtl-layout .main-wrapper,
+  html[dir="rtl"] .main-wrapper {
+    margin-right: var(--sidebar-width, 260px) !important;
+    margin-left: 0 !important;
+  }
+  &.ltr-layout .main-wrapper,
+  html[dir="ltr"] .main-wrapper {
+    margin-left: var(--sidebar-width, 260px) !important;
+    margin-right: 0 !important;
+  }
+}
+
+// RTL collapse arrow behavior — BUG 2 FIX
+html[dir="rtl"] {
+  .collapse-arrow {
+    transform: rotate(0deg);    // ‹ pointing left = closed
+    transition: transform 0.25s ease;
+  }
+  .nav-link[aria-expanded="true"] .collapse-arrow {
+    transform: rotate(-90deg);  // pointing down = open
+  }
+}
+
+// LTR collapse arrow behavior — BUG 2 FIX
+html[dir="ltr"] {
+  .collapse-arrow {
+    transform: rotate(180deg);  // › pointing right = closed
+    transition: transform 0.25s ease;
+  }
+  .nav-link[aria-expanded="true"] .collapse-arrow {
+    transform: rotate(90deg);   // pointing down = open
+  }
+}
+
+// Clean nav-link layout — BUG 3 FIX
+.sidebar .nav-link {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.65rem 1rem !important;
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  border-radius: 8px;
+  margin: 2px 8px;
+  transition: background 0.2s, color 0.2s;
+  gap: 0;                        // no automatic gap — controlled manually
+  white-space: nowrap;
+  overflow: hidden;
+
+  // Remove any ::before or ::after pseudo-elements
+  &::before, &::after { display: none !important; }
+
+  &:hover {
+    background: rgba(255,255,255,0.1);
+    color: white;
+  }
+
+  &.active {
+    background: var(--sidebar-active, #6c63ff);
+    color: white;
+    font-weight: 600;
+  }
+}
+
+// Nav icon sizing
+.sidebar .nav-icon {
+  font-size: 1.1rem;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+// Nav label
+.sidebar .nav-label {
+  font-size: 0.875rem;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Child items — slightly indented
+html[dir="rtl"] .sidebar .collapse .nav-link {
+  padding-left: 1rem !important;
+  padding-right: 2rem !important;  // RTL indent from right
+}
+html[dir="ltr"] .sidebar .collapse .nav-link {
+  padding-right: 1rem !important;
+  padding-left: 2rem !important;   // LTR indent from left
+}
+
+// Remove Bootstrap's default list styling inside sidebar
+.sidebar .nav { 
+  padding: 0; 
+  list-style: none;
+}
+
+.sidebar ul.collapse {
+  padding: 0;
+  list-style: none;
+  background: rgba(0,0,0,0.1);
+  border-radius: 8px;
+  margin: 2px 8px;
+}
