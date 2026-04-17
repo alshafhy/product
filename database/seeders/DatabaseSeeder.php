@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             DemoUserSeeder::class,
             SystemReleasesSeeder::class,
             FoundationLookupSeeder::class,
+            ProductSeeder::class,
         ]);
     }
 }
