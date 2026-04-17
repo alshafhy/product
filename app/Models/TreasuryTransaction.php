@@ -2,16 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Carbon\Carbon;
 
-class TreasuryTransaction extends AppBaseModel
+class TreasuryTransaction extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -28,25 +33,27 @@ class TreasuryTransaction extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
+    protected $casts = [
+        'amount' => 'decimal:4',
+        'transacted_at' => 'datetime',
+    ];
+
+    /**
+     * Configuration for activity logging.
+     */
+    public function getActivitylogOptions(): LogOptions
     {
-        return [
-            'id' => 'integer',
-            'amount' => 'float',
-            'transacted_at' => 'datetime',
-            'branch_id' => 'integer',
-            'user_id' => 'integer',
-            'created_by' => 'integer',
-            'deleted_at' => 'datetime',
-        ];
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty();
     }
 
     /**
-     * Get the parent referenceable model (SaleInvoice, PurchaseInvoice, etc.).
+     * Get the parent referenceable model (SaleInvoice or PurchaseInvoice).
      */
     public function reference(): MorphTo
     {
@@ -54,24 +61,35 @@ class TreasuryTransaction extends AppBaseModel
     }
 
     /**
-     * Get the branch associated with the transaction.
+     * Scope for branch filtering.
      */
+    public function scopeForBranch($query, int $branchId)
+    {
+        return $query->where('branch_id', $branchId);
+    }
+
+    /**
+     * Scope for date filtering.
+     */
+    public function scopeForDate($query, Carbon $date)
+    {
+        return $query->whereDate('transacted_at', $date);
+    }
+
+    /**
+     * Relations
+     */
+
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
-    /**
-     * Get the user associated with the transaction.
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Get the user who created the transaction.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

@@ -4,39 +4,18 @@ namespace App\Policies;
 
 use App\Models\TreasuryTransaction;
 use App\Models\User;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TreasuryPolicy
 {
+    use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('treasury.view');
-    }
-
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, TreasuryTransaction $treasuryTransaction): bool
-    {
-        return $user->can('treasury.view');
-    }
-
-    /**
-     * Determine whether the user can perform deposits.
-     */
-    public function deposit(User $user): bool
-    {
-        return $user->can('treasury.deposit');
-    }
-
-    /**
-     * Determine whether the user can perform withdrawals.
-     */
-    public function withdraw(User $user): bool
-    {
-        return $user->can('treasury.withdraw');
+        return $user->hasPermissionTo('treasury.view');
     }
 
     /**
@@ -44,6 +23,22 @@ class TreasuryPolicy
      */
     public function viewReports(User $user): bool
     {
-        return $user->can('treasury.reports');
+        return $user->hasPermissionTo('treasury.reports');
+    }
+
+    /**
+     * Determine whether the user can deposit cash.
+     */
+    public function deposit(User $user): bool
+    {
+        return $user->hasPermissionTo('treasury.deposit');
+    }
+
+    /**
+     * Determine whether the user can withdraw cash.
+     */
+    public function withdraw(User $user): bool
+    {
+        return $user->hasPermissionTo('treasury.withdraw');
     }
 }

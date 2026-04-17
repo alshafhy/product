@@ -67,6 +67,10 @@ class FoundationSeeder extends Seeder
             'purchase_invoice.create',
             'purchase_invoice.edit',
             'purchase_invoice.delete',
+            'treasury.view',
+            'treasury.deposit',
+            'treasury.withdraw',
+            'treasury.reports',
         ];
 
         foreach ($permissions as $permission) {
