@@ -41,12 +41,6 @@ html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .header-nav
     width: calc(100vw - (100vw - 100%) - 74px) !important;
 }
 
-/* Content margin for RTL (offset from right sidebar) */
-html[dir="rtl"] .app-content,
-html[dir="rtl"] .content {
-    margin-right: 260px !important;
-    margin-left: 0 !important;
-}
 
 /* Content margin: collapsed sidebar state */
 html[dir="rtl"] .vertical-layout.vertical-menu-modern.menu-collapsed .app-content,
