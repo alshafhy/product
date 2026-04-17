@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Flash;
 use Response;
+use App\Models\Branch;
 use App\Models\User;
 use App\Http\Requests;
 use Illuminate\Support\Str;
