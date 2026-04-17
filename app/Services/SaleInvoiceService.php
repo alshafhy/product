@@ -2,69 +2,60 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
-use App\Models\Product;
 use App\Models\SaleInvoice;
 use App\Models\SaleInvoiceItem;
+use App\Models\Product;
+use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
-use Exception;
+use Carbon\Carbon;
 
-class SaleInvoiceService extends BaseService
+class SaleInvoiceService
 {
-    private int $scale = 4;
-
     /**
-     * Create a sale invoice with items and handle accounting logic.
-     * 
-     * @throws Exception
+     * Create a new sale invoice with all associated logic.
      */
     public function createInvoice(array $data, array $items): SaleInvoice
     {
         return DB::transaction(function () use ($data, $items) {
             // 1. Calculate Totals
-            $totals = $this->calculateTotals($items, (float) ($data['discount'] ?? 0), $data['discount_type'] ?? 'fixed');
+            $totals = $this->calculateTotals($items, $data['discount'] ?? '0', $data['discount_type'] ?? 'value');
             
             // 2. Prepare Invoice Data
             $invoiceData = array_merge($data, $totals);
-            $invoiceData['remaining'] = bcsub($totals['total'], (string) ($data['paid'] ?? 0), $this->scale);
+            $invoiceData['invoice_number'] = $this->generateInvoiceNumber($data['branch_id']);
+            $invoiceData['remaining'] = bcsub($totals['total'], $data['paid'] ?? '0', 4);
+            $invoiceData['invoiced_at'] = $data['invoiced_at'] ?? now();
             
-            // Handle debt snapshot
+            // Calculate Debt if Customer exists
             if (!empty($data['customer_id'])) {
-                $customer = Customer::find($data['customer_id']);
-                if ($customer) {
-                    $invoiceData['previous_debt'] = $customer->current_balance;
-                    $invoiceData['total_debt'] = bcadd((string) $customer->current_balance, (string) $invoiceData['remaining'], $this->scale);
-                }
+                $customer = Customer::findOrFail($data['customer_id']);
+                $invoiceData['previous_debt'] = (string) $customer->current_balance;
+                $invoiceData['total_debt'] = bcadd($invoiceData['previous_debt'], $invoiceData['remaining'], 4);
             }
 
-            // 3. Create Invoice
             $invoice = SaleInvoice::create($invoiceData);
 
-            // 4. Create Items and Update stock
-            foreach ($items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
+            // 3. Create Items & Record Snapshots
+            foreach ($items as $item) {
+                $product = Product::findOrFail($item['product_id']);
                 
-                // Snapshot data
-                $item = new SaleInvoiceItem([
+                SaleInvoiceItem::create([
                     'sale_invoice_id' => $invoice->id,
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'code_id' => $product->code_id,
-                    'quantity' => $itemData['quantity'],
-                    'unit_factor' => $itemData['unit_factor'] ?? 1,
-                    'unit_name' => $itemData['unit_name'],
-                    'price_type' => $itemData['price_type'] ?? 'unit1',
-                    'sell_price' => $itemData['sell_price'],
-                    'buy_price' => $product->buy_price, // snapshot current cost
-                    'line_total' => bcmul((string) $itemData['quantity'], (string) $itemData['sell_price'], $this->scale),
+                    'quantity' => $item['quantity'],
+                    'unit_factor' => $item['unit_factor'] ?? '1',
+                    'unit_name' => $item['unit_name'] ?? $product->unit1,
+                    'price_type' => $item['price_type'] ?? 'one',
+                    'sell_price' => $item['sell_price'],
+                    'buy_price' => (string) $product->buy_price,
+                    'line_total' => bcmul($item['quantity'], $item['sell_price'], 4),
                 ]);
-                $item->save();
-
-                // 5. Update Stock
-                $this->updateStock($product, $itemData['quantity']);
             }
 
-            // 6. Handle Customer Debt
+            // 4. Update Stock & Customer Debt
+            $this->updateStock($invoice);
             $this->handleDebt($invoice);
 
             return $invoice;
@@ -72,59 +63,78 @@ class SaleInvoiceService extends BaseService
     }
 
     /**
-     * Calculate invoice totals using BCMath.
+     * Calculate financial totals using BCMath.
      */
-    public function calculateTotals(array $items, float $discount, string $discountType): array
+    public function calculateTotals(array $items, string $discount, string $discountType): array
     {
-        $subtotal = '0.0000';
-        $totalCost = '0.0000';
+        $subtotal = '0';
+        $cost = '0';
 
         foreach ($items as $item) {
-            $lineTotal = bcmul((string) $item['quantity'], (string) $item['sell_price'], $this->scale);
-            $subtotal = bcadd($subtotal, $lineTotal, $this->scale);
+            $product = Product::findOrFail($item['product_id']);
+            $lineTotal = bcmul((string) $item['quantity'], (string) $item['sell_price'], 4);
+            $lineCost = bcmul((string) $item['quantity'], (string) $product->buy_price, 4);
             
-            // Calculate cost logic (snapshot buy_price * quantity)
-            $product = Product::find($item['product_id']);
-            $costPrice = $product ? (string) $product->buy_price : '0';
-            $lineCost = bcmul((string) $item['quantity'], $costPrice, $this->scale);
-            $totalCost = bcadd($totalCost, $lineCost, $this->scale);
+            $subtotal = bcadd($subtotal, $lineTotal, 4);
+            $cost = bcadd($cost, $lineCost, 4);
         }
 
-        $calculatedDiscount = '0.0000';
-        if ($discountType === 'percentage') {
-            $percentage = bcdiv((string) $discount, '100', $this->scale);
-            $calculatedDiscount = bcmul($subtotal, $percentage, $this->scale);
+        $discountValue = '0';
+        if ($discountType === 'percent') {
+            // formula: (subtotal * discount) / 100
+            $discountValue = bcdiv(bcmul($subtotal, $discount, 4), '100', 4);
         } else {
-            $calculatedDiscount = (string) $discount;
+            $discountValue = $discount;
         }
 
-        $total = bcsub($subtotal, $calculatedDiscount, $this->scale);
-        $profit = bcsub($total, $totalCost, $this->scale);
+        $total = bcsub($subtotal, $discountValue, 4);
+        $profit = bcsub($total, $cost, 4);
 
         return [
-            'subtotal' => (float) $subtotal,
-            'discount' => (float) $calculatedDiscount,
-            'total' => (float) $total,
-            'cost' => (float) $totalCost,
-            'profit' => (float) $profit,
+            'subtotal' => $subtotal,
+            'discount' => $discountValue,
+            'total' => $total,
+            'cost' => $cost,
+            'profit' => $profit,
         ];
     }
 
     /**
-     * Deduct stock from product.
+     * Deduct stock based on unit factors.
      */
-    public function updateStock(Product $product, float $quantity): void
+    public function updateStock(SaleInvoice $invoice): void
     {
-        $product->decrement('quantity', $quantity);
+        foreach ($invoice->items as $item) {
+            $product = $item->product;
+            // deduct: quantity * factor
+            $deduction = bcmul((string) $item->quantity, (string) $item->unit_factor, 4);
+            $product->decrement('quantity', (float) $deduction);
+        }
     }
 
     /**
-     * Update customer balance if there is a remaining amount.
+     * Update customer balance if debt exists.
      */
     public function handleDebt(SaleInvoice $invoice): void
     {
-        if ($invoice->customer_id && (float) $invoice->remaining > 0) {
-            $invoice->customer->increment('current_balance', $invoice->remaining);
+        if ($invoice->customer_id && ($invoice->payment_type === 'debt' || $invoice->payment_type === 'partial')) {
+            $customer = $invoice->customer;
+            $customer->recalculateBalance();
         }
+    }
+
+    /**
+     * Generate unique invoice number.
+     */
+    public function generateInvoiceNumber(int $branchId): string
+    {
+        $date = now()->format('Ymd');
+        $count = SaleInvoice::where('branch_id', $branchId)
+            ->whereDate('created_at', Carbon::today())
+            ->count() + 1;
+            
+        $seq = str_pad($count, 4, '0', STR_PAD_LEFT);
+        
+        return "INV-{$branchId}-{$date}-{$seq}";
     }
 }

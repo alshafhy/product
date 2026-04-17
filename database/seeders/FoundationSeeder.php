@@ -58,6 +58,11 @@ class FoundationSeeder extends Seeder
             'supplier.create',
             'supplier.edit',
             'supplier.delete',
+            'sale_invoice.view',
+            'sale_invoice.create',
+            'sale_invoice.edit',
+            'sale_invoice.delete',
+            'sale_invoice.void',
         ];
 
         foreach ($permissions as $permission) {

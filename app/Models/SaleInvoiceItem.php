@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class SaleInvoiceItem extends AppBaseModel
+class SaleInvoiceItem extends Model
 {
+    use HasFactory;
+
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are mass fillable.
      *
      * @var array<int, string>
      */
@@ -26,35 +30,27 @@ class SaleInvoiceItem extends AppBaseModel
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'id' => 'integer',
-            'sale_invoice_id' => 'integer',
-            'product_id' => 'integer',
-            'quantity' => 'float',
-            'unit_factor' => 'float',
-            'sell_price' => 'float',
-            'buy_price' => 'float',
-            'line_total' => 'float',
-        ];
-    }
+    protected $casts = [
+        'quantity' => 'decimal:4',
+        'unit_factor' => 'decimal:4',
+        'sell_price' => 'decimal:4',
+        'buy_price' => 'decimal:4',
+        'line_total' => 'decimal:4',
+    ];
 
     /**
-     * Get the invoice that the item belongs to.
+     * Relations
      */
+
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(SaleInvoice::class, 'sale_invoice_id');
     }
 
-    /**
-     * Get the product associated with the item.
-     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
