@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('treasury_transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('branch_id')->constrained('branches');
-            $table->foreignId('user_id')->constrained('users');
+            $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             
+            // Transaction type
             $table->enum('type', [
                 'deposit',
                 'withdrawal',
@@ -26,18 +27,17 @@ return new class extends Migration
             
             $table->decimal('amount', 15, 4);
             
-            // Polymorphic relation
-            $table->string('reference_type')->nullable();
-            $table->unsignedBigInteger('reference_id')->nullable();
+            // Polymorphic relation (SaleInvoice, PurchaseInvoice, etc.)
+            $table->nullableMorphs('reference');
             
-            $table->text('description')->nullable();
-            $table->timestamp('transacted_at');
+            $table->string('description')->nullable();
+            $table->timestamp('transacted_at')->useCurrent();
+            
+            // Audit
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             
             $table->timestamps();
             $table->softDeletes();
-            $table->foreignId('created_by')->nullable()->constrained('users');
-
-            $table->index(['branch_id', 'transacted_at']);
         });
     }
 

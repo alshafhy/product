@@ -13,14 +13,8 @@ return new class extends Migration
     {
         Schema::create('installments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sale_invoice_id')
-                ->constrained('sale_invoices')
-                ->cascadeOnDelete();
-            
-            $table->foreignId('customer_id')
-                ->nullable()
-                ->constrained('customers')
-                ->nullOnDelete();
+            $table->foreignId('sale_invoice_id')->constrained('sale_invoices')->cascadeOnDelete();
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->nullOnDelete();
             
             $table->decimal('amount', 15, 4);
             $table->date('due_date');
@@ -28,19 +22,19 @@ return new class extends Migration
             
             $table->enum('status', ['not_paid', 'paid', 'overdue'])->default('not_paid');
             
-            $table->string('payment_type')->nullable(); // e.g., cash, check
+            $table->string('payment_type')->nullable(); // cash, credit_card, etc.
             
+            // Guarantor details
             $table->string('guarantor_name')->nullable();
             $table->string('guarantor_phone')->nullable();
             
-            $table->unsignedInteger('days_limit')->default(0);
+            $table->integer('days_limit')->default(0); // Grace period
             $table->text('description')->nullable();
+            
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             
             $table->timestamps();
             $table->softDeletes();
-            $table->foreignId('created_by')->nullable()->constrained('users');
-
-            $table->index(['status', 'due_date']);
         });
     }
 

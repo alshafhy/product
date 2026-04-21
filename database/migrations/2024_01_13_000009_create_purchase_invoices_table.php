@@ -14,28 +14,34 @@ return new class extends Migration
         Schema::create('purchase_invoices', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_number')->unique();
+            $table->foreignId('supplier_id')->constrained('suppliers')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
             
-            $table->foreignId('supplier_id')
-                ->nullable()
-                ->constrained('suppliers')
-                ->nullOnDelete();
-            
-            $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('branch_id')->constrained('branches');
-            
+            // Financials (decimal 15,4)
+            $table->decimal('subtotal', 15, 4)->default(0);
+            $table->decimal('discount', 15, 4)->default(0);
+            $table->string('discount_type')->default('fixed'); // fixed, percentage
             $table->decimal('total', 15, 4)->default(0);
+            
+            // Payment tracking
             $table->decimal('paid', 15, 4)->default(0);
             $table->decimal('remaining', 15, 4)->default(0);
             
-            $table->enum('payment_type', ['cash', 'debt', 'partial'])->default('cash');
-            $table->enum('status', ['draft', 'completed', 'voided'])->default('completed');
+            // Debt snapshot (How much we owe the supplier)
+            $table->decimal('previous_debt', 15, 4)->default(0);
+            $table->decimal('total_debt', 15, 4)->default(0);
+            
+            $table->string('payment_type')->default('cash'); // cash, credit, etc.
+            $table->string('status')->default('paid'); // paid, partially_paid, unpaid, void
             
             $table->text('notes')->nullable();
-            $table->timestamp('invoiced_at');
-
-            $table->foreignId('created_by')->nullable()->constrained('users');
-            $table->foreignId('updated_by')->nullable()->constrained('users');
-
+            $table->dateTime('invoiced_at');
+            
+            // Audit
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+            
             $table->timestamps();
             $table->softDeletes();
         });

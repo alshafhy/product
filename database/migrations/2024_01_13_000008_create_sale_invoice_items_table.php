@@ -13,25 +13,23 @@ return new class extends Migration
     {
         Schema::create('sale_invoice_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sale_invoice_id')
-                ->constrained('sale_invoices')
-                ->cascadeOnDelete();
+            $table->foreignId('sale_invoice_id')->constrained('sale_invoices')->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete();
             
-            $table->foreignId('product_id')->constrained('products');
-            
-            // Snapshots at time of sale
+            // Snapshots
             $table->string('product_name');
-            $table->string('code_id')->nullable();
+            $table->string('code_id');
             
             $table->decimal('quantity', 15, 4);
             $table->decimal('unit_factor', 15, 4)->default(1);
-            $table->string('unit_name')->nullable();
+            $table->string('unit_name');
             
-            $table->enum('price_type', ['one', 'two', 'three'])->default('one');
+            $table->string('price_type')->default('unit1'); // unit1, unit2, unit3
             $table->decimal('sell_price', 15, 4);
-            $table->decimal('buy_price', 15, 4); // For profit calculation
+            $table->decimal('buy_price', 15, 4);
             
             $table->decimal('line_total', 15, 4);
+            
             $table->timestamps();
         });
     }
