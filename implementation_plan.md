@@ -1,44 +1,60 @@
-# Automated RTL Conversion Plan (Vite + PostCSS)
+# Visual Bug Fixes for CashPOS
 
-Reproduce the automatic RTL flipping behavior of `laravel-mix-rtl` using `postcss-rtlcss` within the Vite build pipeline. This will ensure all components, margins, paddings, and directional properties are handled automatically without manual overrides.
+Detailed plan to address 4 specific visual bugs in the sidebar and dashboard.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> This change will move from **manual** RTL overrides (current state) to **automated** translation. I will be installing a new dependency (`postcss-rtlcss`) and configuring PostCSS to handle the flip.
+> Several files and code blocks mentioned in the request do not currently exist in the codebase:
+> - `resources/sass/_responsive.scss`
+> - `resources/views/layouts/partials/sidebar.blade.php`
+> - `resources/views/dashboard.blade.php`
+> - `app/Http/Controllers/DashboardController.php`
+> - `resources/js/app.js` is skeletal and doesn't contain the `applyDesktopState` logic.
+>
+> I will proceed by **creating** these files and adding the provided logic to them, as this seems to be the intended new structure.
 
-- **Mode**: I propose using the `combined` mode for `postcss-rtlcss`. This generates both LTR and RTL rules in the same CSS file, allowing for instantaneous switching via the `dir="rtl"` attribute on the `<html>` tag (already implemented in your header).
-- **Cleanup**: I will remove the manual "Nuclear" fixes from `overrides.scss` as they will be handled automatically by the plugin.
+> [!WARNING]
+> To make `_responsive.scss` effective, it must be imported. I will assume I can add `@import 'responsive';` to `resources/sass/app.scss` unless instructed otherwise.
 
 ## Proposed Changes
 
-### [Component] Build System
-#### [MODIFY] [package.json](file:///home/moustafa/App/product/package.json)
-- Add `postcss-rtlcss` to `devDependencies`.
+### 1. Sidebar Logic & State (Bug 1)
 
-#### [NEW] [postcss.config.cjs](file:///home/moustafa/App/product/postcss.config.cjs)
-- Create a configuration file to enable `postcss-rtlcss` and `autoprefixer`.
+#### [MODIFY] [app.js](file:///home/moustafa/App/product/resources/js/app.js)
+- Add sidebar initialization logic to handle expanded/collapsed state on desktop using `localStorage`.
 
-### [Component] Styling
-#### [MODIFY] [overrides.scss](file:///home/moustafa/App/product/resources/scss/overrides.scss)
-- Remove manual sidebar and content positioning rules.
-- Retain only non-directional overrides (like dark mode file input fixes).
+#### [NEW] [_responsive.scss](file:///home/moustafa/App/product/resources/sass/_responsive.scss)
+- Implement default expanded state for sidebar and content wrapper in both RTL and LTR.
 
-#### [MODIFY] [styles.blade.php](file:///home/moustafa/App/product/resources/views/panels/styles.blade.php)
-- Simplify asset loading by removing the conditional `@vite` for `-rtl` files, as the main files will now contain both LTR and RTL styles.
+### 2. Sidebar Layout & RTL Arrows (Bug 2 & 3)
+
+#### [NEW] [sidebar.blade.php](file:///home/moustafa/App/product/resources/views/layouts/partials/sidebar.blade.php)
+- Implement the new flex-based sidebar layout with proper icon/label/arrow positioning for RTL/LTR.
+
+#### [MODIFY] [_responsive.scss](file:///home/moustafa/App/product/resources/sass/_responsive.scss)
+- Add arrow rotation logic for RTL/LTR.
+- Clean up `nav-link` layout to remove empty white boxes and fix padding/indentation.
+
+### 3. Dashboard Stats Grid (Bug 4)
+
+#### [NEW] [dashboard.blade.php](file:///home/moustafa/App/product/resources/views/dashboard.blade.php)
+- Replace old counters with the new `stats-card-grid` containing 8 stat blocks.
+
+#### [NEW] [DashboardController.php](file:///home/moustafa/App/product/app/Http/Controllers/DashboardController.php)
+- Implement `index()` method with try/catch wrapped DB queries to fetch dashboard statistics.
 
 ## Open Questions
 
-- **Plugin Mode**: Are you comfortable with the increased CSS file size of `combined` mode in exchange for seamless LTR/RTL switching without page reloads?
-- **Manual RTL Files**: Should I keep `custom-rtl.scss` as a final layer of manual tweaks, or do you want to move entirely to the automated system?
+1. **Routing**: Since `DashboardController.php` is new, should I update `routes/web.php` to point the `/home` route to it? The "Touch ONLY" rule technically excludes `web.php`.
+2. **SCSS Import**: May I add `@import 'responsive';` to `resources/sass/app.scss` to ensure the new styles are loaded?
 
 ## Verification Plan
 
-### Automated Tests
-- Run `docker compose run --rm cashpos-node npm install -D postcss-rtlcss`
-- Run `docker compose run --rm cashpos-node npm run build`
-- Check Vite output for generated CSS rules with `[dir="rtl"]` selectors.
+### Automated Verification
+- Run `npm run build` to ensure no build errors after adding new assets and scripts.
 
 ### Manual Verification
-- Use the language switcher to flip from Arabic to English.
-- Verify that **all** components (not just the sidebar) flip their orientation (e.g. check margins on cards, positions of icons in form inputs).
+- Check the sidebar on page load (should be expanded).
+- Verify RTL arrow positioning and rotation.
+- Verify dashboard stats load correctly with the new layout.

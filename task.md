@@ -1,6 +1,13 @@
-- [ ] INSTALL: `postcss-rtlcss` dependency
-- [ ] CONFIGURE: Create `postcss.config.cjs`
-- [ ] CLEANUP: Remove manual nuclear fixes from `overrides.scss`
-- [ ] UPDATE: Simplify `styles.blade.php` asset loading
-- [ ] BUILD: Run `npm run build`
-- [ ] VERIFY: Check UI in browser (LTR and RTL)
+- [ ] Bug 1: Sidebar Expanded by Default
+    - [ ] Modify resources/js/app.js
+    - [ ] Create resources/sass/_responsive.scss
+- [ ] Bug 2: Sidebar Arrow Position (RTL Fix)
+    - [ ] Create/Update resources/views/layouts/partials/sidebar.blade.php
+    - [ ] Add rotation logic to _responsive.scss
+- [ ] Bug 3: Remove Empty White Gaps
+    - [ ] Add nav-link styling to _responsive.scss
+- [ ] Bug 4: Remove Old Dashboard Counters
+    - [ ] Create resources/views/dashboard.blade.php
+    - [ ] Create DashboardController.php
+- [ ] Verification
+    - [ ] npm run build
