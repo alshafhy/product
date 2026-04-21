@@ -11,35 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Recreate products table with CashPOS structure
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('code_id')->unique();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             
-            $table->foreignId('category_id')
-                ->nullable()
-                ->constrained('categories')
-                ->nullOnDelete();
-
-            // Pricing - Set 1
+            // Prices (decimal 15,4)
             $table->decimal('sell_price', 15, 4)->default(0);
-            $table->decimal('buy_price', 15, 4)->default(0);
-            
-            // Pricing - Set 2
             $table->decimal('sell_price2', 15, 4)->default(0);
-            $table->decimal('buy_price2', 15, 4)->default(0);
-            
-            // Pricing - Set 3
             $table->decimal('sell_price3', 15, 4)->default(0);
+            $table->decimal('buy_price', 15, 4)->default(0);
+            $table->decimal('buy_price2', 15, 4)->default(0);
             $table->decimal('buy_price3', 15, 4)->default(0);
-
+            
+            // Stock and Units
             $table->decimal('quantity', 15, 4)->default(0);
-
-            // Multi-Unit Factors
-            $table->string('unit1')->nullable(); // e.g. "Piece"
-            $table->string('unit2')->nullable(); // e.g. "Box"
-            $table->string('unit3')->nullable(); // e.g. "Cartoon"
+            $table->date('expire_date')->nullable();
+            
+            $table->string('unit1')->nullable();
+            $table->string('unit2')->nullable();
+            $table->string('unit3')->nullable();
             
             $table->decimal('factor2', 15, 4)->default(1);
             $table->decimal('factor3', 15, 4)->default(1);
@@ -50,15 +44,21 @@ return new class extends Migration
             $table->string('barcode2')->nullable();
             $table->string('barcode3')->nullable();
             
-            $table->date('expire_date')->nullable();
+            // Meta and Relations
+            $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             
-            $table->foreignId('branch_id')->nullable()->constrained('branches');
-
-            $table->foreignId('created_by')->nullable()->constrained('users');
-            $table->foreignId('updated_by')->nullable()->constrained('users');
-
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        // Recreate product_images table relinked to the new products table
+        Schema::create('product_images', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->string('image_path');
+            $table->timestamps();
         });
     }
 
@@ -67,6 +67,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('product_images');
         Schema::dropIfExists('products');
     }
 };
