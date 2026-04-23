@@ -14,13 +14,27 @@ class TreasuryTransaction extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
-    // Transaction Types
+    // ── Type constants — mirrors Android operations ───────────────
+    const TYPE_OPENING_BALANCE  = 'opening_balance';
     const TYPE_DEPOSIT          = 'deposit';
     const TYPE_WITHDRAWAL       = 'withdrawal';
     const TYPE_EXPENSE          = 'expense';
     const TYPE_SALE_PAYMENT     = 'sale_payment';
     const TYPE_PURCHASE_PAYMENT = 'purchase_payment';
-    const TYPE_OPENING_BALANCE  = 'opening_balance';
+
+    // Types that ADD to balance
+    const CREDIT_TYPES = [
+        self::TYPE_OPENING_BALANCE,
+        self::TYPE_DEPOSIT,
+        self::TYPE_SALE_PAYMENT,
+    ];
+
+    // Types that SUBTRACT from balance
+    const DEBIT_TYPES = [
+        self::TYPE_WITHDRAWAL,
+        self::TYPE_EXPENSE,
+        self::TYPE_PURCHASE_PAYMENT,
+    ];
 
     protected $fillable = [
         'branch_id',
@@ -30,10 +44,9 @@ class TreasuryTransaction extends Model
         'balance_after',
         'reference_type',
         'reference_id',
-        'transaction_date',
         'notes',
+        'transaction_date',
         'created_by',
-        'updated_by',
     ];
 
     protected $casts = [
@@ -47,7 +60,7 @@ class TreasuryTransaction extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['type', 'amount', 'balance_after'])
+            ->logFillable()
             ->logOnlyDirty()
             ->setDescriptionForEvent(fn(string $e) => "TreasuryTransaction {$e}");
     }
@@ -58,14 +71,17 @@ class TreasuryTransaction extends Model
         return $this->belongsTo(Branch::class);
     }
 
-    public function reference(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
-    public function creator(): BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Polymorphic relation to source document (invoice etc.)
+     */
+    public function reference(): MorphTo
+    {
+        return $this->morphTo('reference');
     }
 
     // ── Scopes ───────────────────────────────────────────────────
@@ -79,25 +95,42 @@ class TreasuryTransaction extends Model
         return $query->where('type', $type);
     }
 
-    public function scopeDateRange($query, string $from, string $to)
+    public function scopeDateBetween($query, string $from, string $to)
     {
         return $query->whereBetween('transaction_date', [$from, $to]);
     }
 
-    public function scopeForReference($query, string $type, int $id)
+    public function scopeCredits($query)
     {
-        return $query->where('reference_type', $type)
-                     ->where('reference_id', $id);
+        return $query->whereIn('type', self::CREDIT_TYPES);
     }
 
-    // ── Accessors ────────────────────────────────────────────────
+    public function scopeDebits($query)
+    {
+        return $query->whereIn('type', self::DEBIT_TYPES);
+    }
+
+    // ── Accessors ─────────────────────────────────────────────────
     public function getIsExpenseAttribute(): bool
     {
-        return in_array($this->type, [self::TYPE_EXPENSE, self::TYPE_WITHDRAWAL, self::TYPE_PURCHASE_PAYMENT]);
+        return $this->type === self::TYPE_EXPENSE;
     }
 
-    public function getIsIncomeAttribute(): bool
+    public function getIsCreditAttribute(): bool
     {
-        return in_array($this->type, [self::TYPE_DEPOSIT, self::TYPE_SALE_PAYMENT, self::TYPE_OPENING_BALANCE]);
+        return in_array($this->type, self::CREDIT_TYPES);
+    }
+
+    public function getTypeArabicAttribute(): string
+    {
+        return match ($this->type) {
+            self::TYPE_OPENING_BALANCE  => 'رصيد افتتاحي',
+            self::TYPE_DEPOSIT          => 'إيداع',
+            self::TYPE_WITHDRAWAL       => 'سحب',
+            self::TYPE_EXPENSE          => 'مصروف',
+            self::TYPE_SALE_PAYMENT     => 'تحصيل مبيعات',
+            self::TYPE_PURCHASE_PAYMENT => 'دفعة مشتريات',
+            default                     => $this->type,
+        };
     }
 }

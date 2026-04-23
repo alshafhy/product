@@ -2,151 +2,185 @@
 
 namespace App\Services;
 
-use App\Models\PurchaseInvoice;
 use App\Models\SaleInvoice;
+use App\Models\PurchaseInvoice;
 use App\Models\TreasuryTransaction;
 use Illuminate\Support\Facades\DB;
 
 class TreasuryService
 {
+    // ── Core Balance Reader ───────────────────────────────────────
+
     /**
      * Get current balance for a branch.
-     * Uses the last balance_after record.
+     * Reads the last balance_after — mirrors Android's j() cursor pattern.
+     * Uses lockForUpdate() when called inside a transaction.
      */
-    public function currentBalance(int $branchId): string
+    public function currentBalance(int $branchId, bool $lock = false): string
     {
-        $lastTransaction = TreasuryTransaction::where('branch_id', $branchId)
-            ->orderBy('id', 'desc')
-            ->first();
+        $query = TreasuryTransaction::forBranch($branchId)
+            ->orderByDesc('id')
+            ->limit(1);
 
-        return $lastTransaction ? (string) $lastTransaction->balance_after : '0.0000';
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        $last = $query->first();
+
+        return $last ? (string) $last->balance_after : '0.0000';
+    }
+
+    // ── Public Transaction Methods ────────────────────────────────
+
+    /**
+     * Set opening balance for a branch (first-time setup).
+     * Maps Android's initial treasury state.
+     */
+    public function setOpeningBalance(int $branchId, float $amount, int $userId): TreasuryTransaction
+    {
+        return DB::transaction(function () use ($branchId, $amount, $userId) {
+            return $this->record([
+                'branch_id'        => $branchId,
+                'type'             => TreasuryTransaction::TYPE_OPENING_BALANCE,
+                'amount'           => $amount,
+                'notes'            => 'رصيد افتتاحي',
+                'transaction_date' => today(),
+                'created_by'       => $userId,
+            ]);
+        });
     }
 
     /**
-     * Cash Deposit.
+     * Deposit cash into treasury.
+     * Maps Android: إضافة للخزينة → balance_after = balance_before + amount
      */
     public function deposit(array $data): TreasuryTransaction
     {
-        return $this->createTransaction(
-            $data['branch_id'],
-            TreasuryTransaction::TYPE_DEPOSIT,
-            $data['amount'],
-            $data
-        );
+        return DB::transaction(function () use ($data) {
+            return $this->record(array_merge($data, [
+                'type' => TreasuryTransaction::TYPE_DEPOSIT,
+            ]));
+        });
     }
 
     /**
-     * Cash Withdrawal.
+     * Withdraw cash from treasury.
+     * Maps Android: خصم من الخزينة → balance_after = balance_before - amount
+     * Throws if balance insufficient.
      */
     public function withdraw(array $data): TreasuryTransaction
     {
-        $currentBalance = $this->currentBalance($data['branch_id']);
-        if (bccomp($currentBalance, (string) $data['amount'], 4) < 0) {
-            throw new \RuntimeException("Insufficient treasury balance. Current: {$currentBalance}");
-        }
+        return DB::transaction(function () use ($data) {
+            $balance = $this->currentBalance($data['branch_id'], lock: true);
 
-        return $this->createTransaction(
-            $data['branch_id'],
-            TreasuryTransaction::TYPE_WITHDRAWAL,
-            $data['amount'],
-            $data
-        );
+            if (bccomp((string) $data['amount'], $balance, 4) > 0) {
+                throw new \RuntimeException(
+                    "رصيد الخزينة غير كافٍ. الرصيد الحالي: {$balance}"
+                );
+            }
+
+            return $this->record(array_merge($data, [
+                'type' => TreasuryTransaction::TYPE_WITHDRAWAL,
+            ]));
+        });
     }
 
     /**
-     * Business Expense.
+     * Record an expense from treasury.
+     * Maps Android: مصروف → prefixes notes with "مصروف:"
      */
     public function expense(array $data): TreasuryTransaction
     {
-        return $this->createTransaction(
-            $data['branch_id'],
-            TreasuryTransaction::TYPE_EXPENSE,
-            $data['amount'],
-            $data
-        );
-    }
+        return DB::transaction(function () use ($data) {
+            $balance = $this->currentBalance($data['branch_id'], lock: true);
 
-    /**
-     * Automatic record from a Sale Invoice payment.
-     */
-    public function recordFromSale(SaleInvoice $invoice, float $paidAmount): TreasuryTransaction
-    {
-        return $this->createTransaction(
-            $invoice->branch_id,
-            TreasuryTransaction::TYPE_SALE_PAYMENT,
-            $paidAmount,
-            [
-                'reference_type' => SaleInvoice::class,
-                'reference_id'   => $invoice->id,
-                'notes'          => "Payment received for invoice #{$invoice->invoice_number}",
-                'created_by'     => $invoice->cashier_id,
-            ]
-        );
-    }
+            if (bccomp((string) $data['amount'], $balance, 4) > 0) {
+                throw new \RuntimeException(
+                    "رصيد الخزينة غير كافٍ لتسجيل المصروف."
+                );
+            }
 
-    /**
-     * Automatic record from a Purchase Invoice payment.
-     */
-    public function recordFromPurchase(PurchaseInvoice $invoice, float $paidAmount): TreasuryTransaction
-    {
-        return $this->createTransaction(
-            $invoice->branch_id,
-            TreasuryTransaction::TYPE_PURCHASE_PAYMENT,
-            $paidAmount,
-            [
-                'reference_type' => PurchaseInvoice::class,
-                'reference_id'   => $invoice->id,
-                'notes'          => "Payment made for purchase #{$invoice->invoice_number}",
-                'created_by'     => $invoice->cashier_id,
-            ]
-        );
-    }
-
-    /**
-     * Base transaction creator — ensures atomic balance updates.
-     */
-    protected function createTransaction(
-        int $branchId,
-        string $type,
-        float $amount,
-        array $extra = []
-    ): TreasuryTransaction {
-        return DB::transaction(function () use ($branchId, $type, $amount, $extra) {
-            
-            // 1. Lock last transaction for this branch to prevent race conditions
-            // This effectively serializes treasury operations per branch.
-            $last = TreasuryTransaction::where('branch_id', $branchId)
-                ->lockForUpdate()
-                ->orderBy('id', 'desc')
-                ->first();
-
-            $before = $last ? (string) $last->balance_after : '0.0000';
-            $amountStr = (string) $amount;
-
-            // 2. Determine if amount adds or subtracts
-            $isIncome = in_array($type, [
-                TreasuryTransaction::TYPE_DEPOSIT,
-                TreasuryTransaction::TYPE_SALE_PAYMENT,
-                TreasuryTransaction::TYPE_OPENING_BALANCE
-            ]);
-
-            $after = $isIncome 
-                ? bcadd($before, $amountStr, 4)
-                : bcsub($before, $amountStr, 4);
-
-            // 3. Persist
-            return TreasuryTransaction::create([
-                'branch_id'        => $branchId,
-                'type'             => $type,
-                'amount'           => $amountStr,
-                'balance_before'   => $before,
-                'balance_after'    => $after,
-                'reference_type'   => $extra['reference_type'] ?? null,
-                'reference_id'     => $extra['reference_id']   ?? null,
-                'transaction_date' => $extra['transaction_date'] ?? now()->toDateString(),
-                'notes'            => $extra['notes'] ?? null,
-                'created_by'       => $extra['created_by'] ?? auth()->id(),
-            ]);
+            return $this->record(array_merge($data, [
+                'type'  => TreasuryTransaction::TYPE_EXPENSE,
+                'notes' => 'مصروف: ' . ($data['notes'] ?? ''),
+            ]));
         });
+    }
+
+    /**
+     * Record sale payment received into treasury.
+     * Called automatically by SaleInvoiceService.
+     * Maps Android: تحصيل مبيعات
+     */
+    public function recordFromSale(
+        SaleInvoice $invoice,
+        float $paidAmount,
+        int $userId
+    ): TreasuryTransaction {
+        return $this->record([
+            'branch_id'        => $invoice->branch_id,
+            'type'             => TreasuryTransaction::TYPE_SALE_PAYMENT,
+            'amount'           => $paidAmount,
+            'reference_type'   => 'sale_invoice',
+            'reference_id'     => $invoice->id,
+            'notes'            => "تحصيل فاتورة مبيعات: {$invoice->invoice_number}",
+            'transaction_date' => $invoice->invoice_date,
+            'created_by'       => $userId,
+        ]);
+    }
+
+    /**
+     * Record purchase payment paid out from treasury.
+     * Called automatically by PurchaseInvoiceService.
+     */
+    public function recordFromPurchase(
+        PurchaseInvoice $invoice,
+        float $paidAmount,
+        int $userId
+    ): TreasuryTransaction {
+        $balance = $this->currentBalance($invoice->branch_id, lock: true);
+
+        if (bccomp((string) $paidAmount, $balance, 4) > 0) {
+            throw new \RuntimeException(
+                "رصيد الخزينة غير كافٍ لتسجيل دفعة المشتريات."
+            );
+        }
+
+        return $this->record([
+            'branch_id'        => $invoice->branch_id,
+            'type'             => TreasuryTransaction::TYPE_PURCHASE_PAYMENT,
+            'amount'           => $paidAmount,
+            'reference_type'   => 'purchase_invoice',
+            'reference_id'     => $invoice->id,
+            'notes'            => "دفعة فاتورة مشتريات: {$invoice->invoice_number}",
+            'transaction_date' => $invoice->invoice_date,
+            'created_by'       => $userId,
+        ]);
+    }
+
+    // ── Private Core ──────────────────────────────────────────────
+
+    /**
+     * Core record method — always called inside a DB::transaction.
+     * Reads current balance with lock, computes before/after, persists.
+     * This is the single source of truth for all treasury writes.
+     */
+    private function record(array $data): TreasuryTransaction
+    {
+        $balanceBefore = $this->currentBalance($data['branch_id'], lock: true);
+
+        // Determine direction: credit types add, debit types subtract
+        $type = $data['type'];
+
+        $balanceAfter = in_array($type, TreasuryTransaction::CREDIT_TYPES)
+            ? bcadd($balanceBefore, (string) $data['amount'], 4)
+            : bcsub($balanceBefore, (string) $data['amount'], 4);
+
+        return TreasuryTransaction::create(array_merge($data, [
+            'balance_before'   => $balanceBefore,
+            'balance_after'    => $balanceAfter,
+            'transaction_date' => $data['transaction_date'] ?? today(),
+        ]));
     }
 }

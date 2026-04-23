@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoiceService
 {
+    public function __construct(
+        private readonly TreasuryService $treasuryService
+    ) {}
+
     /**
      * Create a complete purchase invoice atomically.
      * Mirrors Android buyinvoice save flow:
@@ -162,6 +166,15 @@ class PurchaseInvoiceService
                 if (bccomp($paidAmount, '0', 4) > 0) {
                     $supplier->recordPayment((float) $paidAmount);
                 }
+            }
+
+            // ── 8. Record in treasury ────────────────────────────────
+            if (bccomp($paidAmount, '0', 4) > 0) {
+                $this->treasuryService->recordFromPurchase(
+                    $invoice,
+                    (float) $paidAmount,
+                    $header['cashier_id']
+                );
             }
 
             return $invoice->load('items');

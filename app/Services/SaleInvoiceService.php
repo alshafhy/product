@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class SaleInvoiceService
 {
+    public function __construct(
+        private readonly TreasuryService $treasuryService
+    ) {}
+
     /**
      * Create a complete sale invoice atomically.
      *
@@ -157,6 +161,15 @@ class SaleInvoiceService
                 if (bccomp($paidAmount, '0', 4) > 0) {
                     $customer->recordPayment((float) $paidAmount);
                 }
+            }
+
+            // ── 8. Record in treasury (cash sales only) ───────────────
+            if (bccomp($paidAmount, '0', 4) > 0) {
+                $this->treasuryService->recordFromSale(
+                    $invoice,
+                    (float) $paidAmount,
+                    $header['cashier_id']
+                );
             }
 
             return $invoice->load('items');

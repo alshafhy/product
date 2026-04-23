@@ -12,36 +12,39 @@ return new class extends Migration
             $table->id();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
 
-            // ── Transaction Identity ──────────────────────────────
-            // 'deposit'          → Cash in
-            // 'withdrawal'       → Cash out
-            // 'expense'          → Business expense
-            // 'sale_payment'     → Linked to sale_invoice
-            // 'purchase_payment' → Linked to purchase_invoice
-            // 'opening_balance'  → Initial cash in treasury
-            $table->string('type');
+            // ── Type ──────────────────────────────────────────────
+            // Maps Android: deposit=إضافة, withdrawal=خصم, expense=مصروف
+            // sale_payment / purchase_payment added automatically by services
+            $table->enum('type', [
+                'opening_balance',
+                'deposit',
+                'withdrawal',
+                'expense',
+                'sale_payment',
+                'purchase_payment',
+            ]);
+
+            // ── Amount & Running Balance ───────────────────────────
+            // Maps Android: value, totalbefore, totalAfter
             $table->decimal('amount', 15, 4);
+            $table->decimal('balance_before', 15, 4)->default(0); // totalbefore
+            $table->decimal('balance_after', 15, 4)->default(0);  // totalAfter
 
-            // ── Balances (Snapshots) ──────────────────────────────
-            // Mirroring Android 'totalbefore' and 'totalAfter'
-            $table->decimal('balance_before', 15, 4);
-            $table->decimal('balance_after', 15, 4);
+            // ── Reference (polymorphic link to invoice if applicable)
+            $table->string('reference_type')->nullable(); // 'sale_invoice' | 'purchase_invoice'
+            $table->unsignedBigInteger('reference_id')->nullable();
+            $table->index(['reference_type', 'reference_id'], 'treasury_reference_index');
 
-            // ── Reference (Polymorphic) ───────────────────────────
-            // Allows linking to SaleInvoice, PurchaseInvoice, etc.
-            $table->nullableMorphs('reference');
-
-            $table->date('transaction_date');
             $table->text('notes')->nullable();
+            $table->date('transaction_date');
 
             $table->timestamps();
             $table->softDeletes();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
 
             // ── Indexes ───────────────────────────────────────────
             $table->index(['branch_id', 'transaction_date']);
-            $table->index(['type', 'transaction_date']);
+            $table->index(['branch_id', 'type']);
         });
     }
 
