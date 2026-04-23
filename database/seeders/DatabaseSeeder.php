@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             ProductPermissionsSeeder::class,
             CustomerSupplierPermissionsSeeder::class,
             SaleInvoicePermissionsSeeder::class,
+            PurchaseInvoicePermissionsSeeder::class,
         ]);
     }
 }
