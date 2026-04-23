@@ -137,7 +137,7 @@ class SystemComponentsSeeder extends Seeder
                 'icon_class'      => 'bi bi-person-check',
                 'sort_order'      => 8,
                 'is_active'       => true,
-                'permission_name' => 'view users',
+                'permission_name' => 'user.view',
             ],
         ];
     }
@@ -157,7 +157,7 @@ class SystemComponentsSeeder extends Seeder
                 'icon_class'      => 'bi bi-plus-circle',
                 'sort_order'      => 1,
                 'is_active'       => true,
-                'permission_name' => 'create saleInvoices',
+                'permission_name' => 'sale_invoice.create',
             ],
             [
                 '_parent_key'     => 'sales',
@@ -171,7 +171,7 @@ class SystemComponentsSeeder extends Seeder
                 'icon_class'      => 'bi bi-list-ul',
                 'sort_order'      => 2,
                 'is_active'       => true,
-                'permission_name' => 'view saleInvoices',
+                'permission_name' => 'sale_invoice.view',
             ],
             [
                 '_parent_key'     => 'purchases',
@@ -185,7 +185,7 @@ class SystemComponentsSeeder extends Seeder
                 'icon_class'      => 'bi bi-plus-circle',
                 'sort_order'      => 1,
                 'is_active'       => true,
-                'permission_name' => 'create purchaseInvoices',
+                'permission_name' => 'purchase_invoice.create',
             ],
             [
                 '_parent_key'     => 'purchases',
@@ -199,7 +199,7 @@ class SystemComponentsSeeder extends Seeder
                 'icon_class'      => 'bi bi-list-ul',
                 'sort_order'      => 2,
                 'is_active'       => true,
-                'permission_name' => 'view purchaseInvoices',
+                'permission_name' => 'purchase_invoice.view',
             ],
             [
                 '_parent_key'     => 'inventory',

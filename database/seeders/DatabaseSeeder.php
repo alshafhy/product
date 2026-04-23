@@ -6,31 +6,17 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
         $this->call([
-            RolesSeeder::class,
+            PermissionsSeeder::class, // must run first — all others depend on it
             SystemComponentsSeeder::class,
-            PermissionsSeeder::class, 
             DemoUserSeeder::class,
             SystemReleasesSeeder::class,
             FoundationLookupSeeder::class,
             ProductSeeder::class,
             PeopleSeeder::class,
-            SaleInvoicePermissionsSeeder::class,
-            PurchaseInvoicePermissionsSeeder::class,
-            TreasuryPermissionsSeeder::class,
-            InstallmentPermissionsSeeder::class,
             FoundationSeeder::class,
-            ProductPermissionsSeeder::class,
-            CustomerSupplierPermissionsSeeder::class,
-            ReportPermissionsSeeder::class,
         ]);
     }
 }
