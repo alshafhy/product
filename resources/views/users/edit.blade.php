@@ -111,7 +111,7 @@
         
                 {{-- <div class="form-group col-sm-12">
                     {!! Form::submit('حفظ', ['class' => 'btn btn-primary']) !!}
-                    <a href="{{ route('roles.index') }}" class="btn btn-default">إلغاء</a>
+                    <a href="{{ route('dashboard.roles.index') }}" class="btn btn-default">إلغاء</a>
                 </div>
         
                 {!! Form::close() !!} --}}
@@ -122,7 +122,7 @@
 
             <div class="card-footer">
                 {!! Form::submit(__('crud.save'), ['class' => 'btn btn-primary']) !!}
-                <a href="{{ route('users.index') }}" class="btn btn-default">
+                <a href="{{ route('dashboard.users.index') }}" class="btn btn-default">
                     @lang('crud.cancel')
                  </a>
             </div>

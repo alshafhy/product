@@ -26,7 +26,7 @@
 
             <div class="card-footer">
                 {!! Form::submit(__('crud.save'), ['class' => 'btn btn-primary']) !!}
-                <a href="{{ route('users.index') }}" class="btn btn-default">
+                <a href="{{ route('dashboard.users.index') }}" class="btn btn-default">
                  @lang('crud.cancel')
                 </a>
             </div>

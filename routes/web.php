@@ -217,6 +217,13 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         ->name('installments.collect')
         ->middleware('permission:installment.collect');
 
+    // ── User Management ───────────────────────────────────────────
+    Route::resource('users', \App\Http\Controllers\UserController::class)
+        ->middleware('permission:user.view');
+        
+    Route::resource('roles', \App\Http\Controllers\RoleController::class)
+        ->middleware('permission:role.view');
+
     // ── Reports ───────────────────────────────────────────────────
     Route::prefix('reports')->name('reports.')->middleware('permission:report.view')->group(function () {
         Route::get('/',            [\App\Http\Controllers\ReportController::class, 'index'])->name('index');
