@@ -22,7 +22,7 @@ class CreateSystemComponentsTable extends Migration
             $table->integer('_lft');
             $table->integer('_rgt');
             $table->integer('comp_type');
-            $table->string('route_name');
+            $table->string('route_name')->nullable();
             $table->string('prefix')->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('system_components');
             $table->string('icon_name')->nullable();

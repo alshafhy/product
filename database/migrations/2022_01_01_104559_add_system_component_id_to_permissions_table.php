@@ -14,7 +14,7 @@ class AddSystemComponentIdToPermissionsTable extends Migration
     public function up()
     {
         Schema::table('permissions', function (Blueprint $table) {
-            $table->foreignId('system_component_id')->constrained();
+            $table->foreignId('system_component_id')->nullable()->constrained();
         });
     }
 

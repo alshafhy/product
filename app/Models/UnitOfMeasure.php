@@ -2,40 +2,53 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class UnitOfMeasure extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'units_of_measure';
 
-    /**
-     * The attributes that are mass fillable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'ar_name',
+        'abbreviation',
+        'is_active',
+        'created_by',
+        'updated_by',
     ];
 
-    /**
-     * Configuration for activity logging.
-     */
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->logOnlyDirty();
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $eventName) => "Unit {$eventName}");
+    }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class, 'unit_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }
