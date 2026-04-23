@@ -2,121 +2,151 @@
 
 namespace App\Services;
 
-use App\Models\TreasuryTransaction;
-use App\Models\SaleInvoice;
 use App\Models\PurchaseInvoice;
+use App\Models\SaleInvoice;
+use App\Models\TreasuryTransaction;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class TreasuryService
 {
     /**
-     * Get the current balance for a branch.
+     * Get current balance for a branch.
+     * Uses the last balance_after record.
      */
-    public function getBalance(int $branchId): string
+    public function currentBalance(int $branchId): string
     {
-        $transactions = TreasuryTransaction::where('branch_id', $branchId)->get();
-        
-        $balance = '0';
-        foreach ($transactions as $tx) {
-            if (in_array($tx->type, ['deposit', 'sale_receipt'])) {
-                $balance = bcadd($balance, (string) $tx->amount, 4);
-            } else {
-                $balance = bcsub($balance, (string) $tx->amount, 4);
-            }
-        }
+        $lastTransaction = TreasuryTransaction::where('branch_id', $branchId)
+            ->orderBy('id', 'desc')
+            ->first();
 
-        return $balance;
+        return $lastTransaction ? (string) $lastTransaction->balance_after : '0.0000';
     }
 
     /**
-     * Record a cash deposit.
+     * Cash Deposit.
      */
     public function deposit(array $data): TreasuryTransaction
     {
-        return TreasuryTransaction::create(array_merge($data, [
-            'type' => 'deposit',
-            'transacted_at' => $data['transacted_at'] ?? now(),
-        ]));
+        return $this->createTransaction(
+            $data['branch_id'],
+            TreasuryTransaction::TYPE_DEPOSIT,
+            $data['amount'],
+            $data
+        );
     }
 
     /**
-     * Record a cash withdrawal with balance validation.
+     * Cash Withdrawal.
      */
     public function withdraw(array $data): TreasuryTransaction
     {
-        $currentBalance = $this->getBalance($data['branch_id']);
-        
-        if (bccomp((string) $data['amount'], $currentBalance, 4) === 1) {
-            throw new \Exception("Insufficient treasury balance for withdrawal. Current: {$currentBalance}");
+        $currentBalance = $this->currentBalance($data['branch_id']);
+        if (bccomp($currentBalance, (string) $data['amount'], 4) < 0) {
+            throw new \RuntimeException("Insufficient treasury balance. Current: {$currentBalance}");
         }
 
-        return TreasuryTransaction::create(array_merge($data, [
-            'type' => 'withdrawal',
-            'transacted_at' => $data['transacted_at'] ?? now(),
-        ]));
+        return $this->createTransaction(
+            $data['branch_id'],
+            TreasuryTransaction::TYPE_WITHDRAWAL,
+            $data['amount'],
+            $data
+        );
     }
 
     /**
-     * Automatically record payment received from a sale invoice.
+     * Business Expense.
      */
-    public function recordFromSaleInvoice(SaleInvoice $invoice): TreasuryTransaction
+    public function expense(array $data): TreasuryTransaction
     {
-        return TreasuryTransaction::create([
-            'branch_id' => $invoice->branch_id,
-            'user_id' => $invoice->user_id,
-            'type' => 'sale_receipt',
-            'amount' => (string) $invoice->paid,
-            'reference_type' => SaleInvoice::class,
-            'reference_id' => $invoice->id,
-            'description' => "Receipt for Invoice #{$invoice->invoice_number}",
-            'transacted_at' => $invoice->invoiced_at,
-            'created_by' => $invoice->created_by,
-        ]);
+        return $this->createTransaction(
+            $data['branch_id'],
+            TreasuryTransaction::TYPE_EXPENSE,
+            $data['amount'],
+            $data
+        );
     }
 
     /**
-     * Automatically record payment made for a purchase invoice.
+     * Automatic record from a Sale Invoice payment.
      */
-    public function recordFromPurchaseInvoice(PurchaseInvoice $invoice): TreasuryTransaction
+    public function recordFromSale(SaleInvoice $invoice, float $paidAmount): TreasuryTransaction
     {
-        return TreasuryTransaction::create([
-            'branch_id' => $invoice->branch_id,
-            'user_id' => $invoice->user_id,
-            'type' => 'purchase_payment',
-            'amount' => (string) $invoice->paid,
-            'reference_type' => PurchaseInvoice::class,
-            'reference_id' => $invoice->id,
-            'description' => "Payment for Purchase #{$invoice->invoice_number}",
-            'transacted_at' => $invoice->invoiced_at,
-            'created_by' => $invoice->created_by,
-        ]);
+        return $this->createTransaction(
+            $invoice->branch_id,
+            TreasuryTransaction::TYPE_SALE_PAYMENT,
+            $paidAmount,
+            [
+                'reference_type' => SaleInvoice::class,
+                'reference_id'   => $invoice->id,
+                'notes'          => "Payment received for invoice #{$invoice->invoice_number}",
+                'created_by'     => $invoice->cashier_id,
+            ]
+        );
     }
 
     /**
-     * Generate a daily treasury report for a branch.
+     * Automatic record from a Purchase Invoice payment.
      */
-    public function getDailyReport(Carbon $date, int $branchId): array
+    public function recordFromPurchase(PurchaseInvoice $invoice, float $paidAmount): TreasuryTransaction
     {
-        $txs = TreasuryTransaction::forBranch($branchId)->forDate($date)->get();
-        
-        $totalIn = '0';
-        $totalOut = '0';
+        return $this->createTransaction(
+            $invoice->branch_id,
+            TreasuryTransaction::TYPE_PURCHASE_PAYMENT,
+            $paidAmount,
+            [
+                'reference_type' => PurchaseInvoice::class,
+                'reference_id'   => $invoice->id,
+                'notes'          => "Payment made for purchase #{$invoice->invoice_number}",
+                'created_by'     => $invoice->cashier_id,
+            ]
+        );
+    }
 
-        foreach ($txs as $tx) {
-            if (in_array($tx->type, ['deposit', 'sale_receipt'])) {
-                $totalIn = bcadd($totalIn, (string) $tx->amount, 4);
-            } else {
-                $totalOut = bcadd($totalOut, (string) $tx->amount, 4);
-            }
-        }
+    /**
+     * Base transaction creator — ensures atomic balance updates.
+     */
+    protected function createTransaction(
+        int $branchId,
+        string $type,
+        float $amount,
+        array $extra = []
+    ): TreasuryTransaction {
+        return DB::transaction(function () use ($branchId, $type, $amount, $extra) {
+            
+            // 1. Lock last transaction for this branch to prevent race conditions
+            // This effectively serializes treasury operations per branch.
+            $last = TreasuryTransaction::where('branch_id', $branchId)
+                ->lockForUpdate()
+                ->orderBy('id', 'desc')
+                ->first();
 
-        return [
-            'date' => $date->toDateString(),
-            'total_in' => $totalIn,
-            'total_out' => $totalOut,
-            'net_flow' => bcsub($totalIn, $totalOut, 4),
-            'transactions' => $txs,
-        ];
+            $before = $last ? (string) $last->balance_after : '0.0000';
+            $amountStr = (string) $amount;
+
+            // 2. Determine if amount adds or subtracts
+            $isIncome = in_array($type, [
+                TreasuryTransaction::TYPE_DEPOSIT,
+                TreasuryTransaction::TYPE_SALE_PAYMENT,
+                TreasuryTransaction::TYPE_OPENING_BALANCE
+            ]);
+
+            $after = $isIncome 
+                ? bcadd($before, $amountStr, 4)
+                : bcsub($before, $amountStr, 4);
+
+            // 3. Persist
+            return TreasuryTransaction::create([
+                'branch_id'        => $branchId,
+                'type'             => $type,
+                'amount'           => $amountStr,
+                'balance_before'   => $before,
+                'balance_after'    => $after,
+                'reference_type'   => $extra['reference_type'] ?? null,
+                'reference_id'     => $extra['reference_id']   ?? null,
+                'transaction_date' => $extra['transaction_date'] ?? now()->toDateString(),
+                'notes'            => $extra['notes'] ?? null,
+                'created_by'       => $extra['created_by'] ?? auth()->id(),
+            ]);
+        });
     }
 }
