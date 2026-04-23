@@ -48,7 +48,7 @@
                             <div class="row">
                                 <div class="col-sm-12">
                                     {!! Form::submit('Save', ['class' => 'btn btn-primary']) !!}
-                                    <a href="{{ route('products.index') }}" class="btn btn-secondary">Cancel</a>
+                                    <a href="{{ route('dashboard.products.index') }}" class="btn btn-secondary">Cancel</a>
                                 </div>
                             </div>
 

@@ -14,13 +14,13 @@
     </a>
     <ul class="menu-content">
         <li class="{{ Request::is('sale-invoices/create') ? 'active' : '' }}">
-            <a href="{{ route('saleInvoices.create') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.sale-invoices.create') }}" class="d-flex align-items-center">
                 <i data-feather="plus-circle"></i>
                 <span class="menu-item text-truncate">{{ __('layout.new_sale_invoice') }}</span>
             </a>
         </li>
         <li class="{{ Request::is('sale-invoices') ? 'active' : '' }}">
-            <a href="{{ route('saleInvoices.index') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.sale-invoices.index') }}" class="d-flex align-items-center">
                 <i data-feather="list"></i>
                 <span class="menu-item text-truncate">{{ __('layout.sales_history') }}</span>
             </a>
@@ -36,13 +36,13 @@
     </a>
     <ul class="menu-content">
         <li class="{{ Request::is('purchase-invoices/create') ? 'active' : '' }}">
-            <a href="{{ route('purchaseInvoices.create') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.purchase-invoices.create') }}" class="d-flex align-items-center">
                 <i data-feather="plus-circle"></i>
                 <span class="menu-item text-truncate">{{ __('layout.new_purchase_invoice') }}</span>
             </a>
         </li>
         <li class="{{ Request::is('purchase-invoices') ? 'active' : '' }}">
-            <a href="{{ route('purchaseInvoices.index') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.purchase-invoices.index') }}" class="d-flex align-items-center">
                 <i data-feather="list"></i>
                 <span class="menu-item text-truncate">{{ __('layout.purchase_history') }}</span>
             </a>
@@ -52,7 +52,7 @@
 
 {{-- Customers --}}
 <li class="nav-item {{ Request::is('customers*') ? 'active' : '' }}">
-    <a href="{{ route('customers.index') }}" class="d-flex align-items-center">
+    <a href="{{ route('dashboard.customers.index') }}" class="d-flex align-items-center">
         <i data-feather="users"></i>
         <span class="menu-title text-truncate">{{ __('layout.customers') }}</span>
     </a>
@@ -60,7 +60,7 @@
 
 {{-- Suppliers --}}
 <li class="nav-item {{ Request::is('suppliers*') ? 'active' : '' }}">
-    <a href="{{ route('suppliers.index') }}" class="d-flex align-items-center">
+    <a href="{{ route('dashboard.suppliers.index') }}" class="d-flex align-items-center">
         <i data-feather="briefcase"></i>
         <span class="menu-title text-truncate">{{ __('layout.suppliers') }}</span>
     </a>
@@ -74,13 +74,13 @@
     </a>
     <ul class="menu-content">
         <li class="{{ Request::is('products*') ? 'active' : '' }}">
-            <a href="{{ route('products.index') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.products.index') }}" class="d-flex align-items-center">
                 <i data-feather="package"></i>
                 <span class="menu-item text-truncate">{{ __('layout.products') }}</span>
             </a>
         </li>
         <li class="{{ Request::is('categories*') ? 'active' : '' }}">
-            <a href="{{ route('categories.index') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.categories.index') }}" class="d-flex align-items-center">
                 <i data-feather="tag"></i>
                 <span class="menu-item text-truncate">{{ __('layout.categories') }}</span>
             </a>
@@ -96,25 +96,25 @@
     </a>
     <ul class="menu-content">
         <li class="{{ Request::is('treasury-transactions') ? 'active' : '' }}">
-            <a href="{{ route('treasuryTransactions.index') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.treasury.index') }}" class="d-flex align-items-center">
                 <i data-feather="repeat"></i>
                 <span class="menu-item text-truncate">{{ __('layout.transactions') }}</span>
             </a>
         </li>
         <li class="{{ Request::is('treasury-transactions/create') ? 'active' : '' }}">
-            <a href="{{ route('treasuryTransactions.create') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.treasury.create') }}" class="d-flex align-items-center">
                 <i data-feather="arrow-down-circle"></i>
                 <span class="menu-item text-truncate">{{ __('layout.deposit_withdraw') }}</span>
             </a>
         </li>
         <li class="{{ Request::is('installments') ? 'active' : '' }}">
-            <a href="{{ route('installments.index') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.installments.index') }}" class="d-flex align-items-center">
                 <i data-feather="credit-card"></i>
                 <span class="menu-item text-truncate">{{ __('layout.installments') }}</span>
             </a>
         </li>
         <li class="{{ Request::is('installments/overdue*') ? 'active' : '' }}">
-            <a href="{{ route('installments.overdue') }}" class="d-flex align-items-center">
+            <a href="{{ route('dashboard.reports.installments') }}" class="d-flex align-items-center">
                 <i data-feather="alert-circle"></i>
                 <span class="menu-item text-truncate">{{ __('layout.overdue_installments') }}</span>
             </a>
@@ -124,7 +124,7 @@
 
 {{-- User Management --}}
 <li class="nav-item {{ Request::is('users*') ? 'active' : '' }}">
-    <a href="{{ route('users.index') }}" class="d-flex align-items-center">
+    <a href="{{ route('dashboard.users.index') }}" class="d-flex align-items-center">
         <i data-feather="user-check"></i>
         <span class="menu-title text-truncate">{{ __('layout.user_management') }}</span>
     </a>
