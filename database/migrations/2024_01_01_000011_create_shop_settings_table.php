@@ -19,12 +19,10 @@ return new class extends Migration
             $table->string('currency')->default('EGP');
             $table->string('currency_symbol')->default('ج.م');
             $table->unsignedTinyInteger('decimal_places')->default(2);
-            // Invoice print settings (maps to Android ONE/TWO flags + extras)
             $table->json('print_settings')->nullable();
-            // Tax / discount / invoice numbering config
             $table->json('invoice_settings')->nullable();
             $table->timestamps();
-            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
         });
     }
 
