@@ -210,7 +210,13 @@ Route::middleware(['auth'])->prefix('dashboard')->name('dashboard.')->group(func
         ->middleware('permission:treasury.expense');
 
     // ── Installments ──────────────────────────────────────────────
+    // overdue must come before resource to avoid matching as {installment}
+    Route::get('installments/overdue', [\App\Http\Controllers\InstallmentController::class, 'overdue'])
+        ->name('installments.overdue')
+        ->middleware('permission:installment.view_overdue');
+
     Route::resource('installments', \App\Http\Controllers\InstallmentController::class)
+        ->only(['index', 'show', 'destroy'])
         ->middleware('permission:installment.view');
 
     Route::post('installments/{installment}/collect', [\App\Http\Controllers\InstallmentController::class, 'collect'])

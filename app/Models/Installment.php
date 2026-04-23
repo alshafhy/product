@@ -26,18 +26,18 @@ class Installment extends Model
         'amount',
         'status',
         'pay_type',
+        'paid_date',
         'guarantor_name',
         'guarantor_phone',
-        'paid_date',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'days_limit'   => 'integer',
-        'collect_date' => 'date',
         'amount'       => 'decimal:4',
+        'collect_date' => 'date',
         'paid_date'    => 'date',
+        'days_limit'   => 'integer',
     ];
 
     // ── Activity Log ─────────────────────────────────────────────
@@ -65,15 +65,30 @@ class Installment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     // ── Scopes ───────────────────────────────────────────────────
     public function scopeUnpaid($query)
     {
         return $query->where('status', self::STATUS_NOT_PAID);
     }
 
+    public function scopePaid($query)
+    {
+        return $query->where('status', self::STATUS_PAID);
+    }
+
+    /**
+     * Overdue = status not_paid AND collect_date < today.
+     * Maps Android: statue.equals("not_paid") && today.after(collectdate)
+     */
     public function scopeOverdue($query)
     {
-        return $query->unpaid()->where('collect_date', '<', now()->toDateString());
+        return $query->where('status', self::STATUS_NOT_PAID)
+                     ->where('collect_date', '<', today());
     }
 
     public function scopeForCustomer($query, int $customerId)
@@ -86,26 +101,42 @@ class Installment extends Model
         return $query->whereBetween('collect_date', [$from, $to]);
     }
 
-    // ── Accessors ────────────────────────────────────────────────
-    /**
-     * Is this installment past its due date and still unpaid?
-     */
-    public function getIsOverdueAttribute(): bool
+    public function scopeForBranch($query, int $branchId)
     {
-        return $this->status === self::STATUS_NOT_PAID 
-            && $this->collect_date->isPast() 
-            && !$this->collect_date->isToday();
+        return $query->whereHas('saleInvoice', fn($q) => $q->where('branch_id', $branchId));
     }
 
+    // ── Accessors ─────────────────────────────────────────────────
+
     /**
-     * Number of days overdue.
+     * Maps Android: TimeUnit.DAYS.convert(today - collectdate)
+     * Returns number of days overdue (0 if not overdue).
      */
     public function getDaysOverdueAttribute(): int
     {
-        if (!$this->is_overdue) {
+        if ($this->status === self::STATUS_PAID) {
             return 0;
         }
 
-        return (int) $this->collect_date->diffInDays(now());
+        $diff = today()->diffInDays($this->collect_date, false);
+
+        // diffInDays returns negative when collect_date is in the past
+        return $diff < 0 ? abs((int) $diff) : 0;
+    }
+
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->status === self::STATUS_NOT_PAID
+            && $this->collect_date->isPast();
+    }
+
+    public function getIsPaidAttribute(): bool
+    {
+        return $this->status === self::STATUS_PAID;
+    }
+
+    public function getStatusArabicAttribute(): string
+    {
+        return $this->status === self::STATUS_PAID ? 'مدفوع' : 'غير مدفوع';
     }
 }

@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 class SaleInvoiceService
 {
     public function __construct(
-        private readonly TreasuryService $treasuryService
+        private readonly TreasuryService $treasuryService,
+        private readonly InstallmentService $installmentService
     ) {}
 
     /**
@@ -170,6 +171,11 @@ class SaleInvoiceService
                     (float) $paidAmount,
                     $header['cashier_id']
                 );
+            }
+
+            // ── 9. Create installments if provided ────────────────
+            if (!empty($header['installments']) && bccomp($remaining, '0', 4) > 0) {
+                $this->installmentService->createForInvoice($invoice, $header['installments']);
             }
 
             return $invoice->load('items');

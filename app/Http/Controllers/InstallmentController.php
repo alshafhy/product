@@ -7,39 +7,113 @@ use App\Services\InstallmentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Gate;
 
 class InstallmentController extends Controller
 {
-    protected InstallmentService $service;
+    public function __construct(
+        private readonly InstallmentService $installmentService
+    ) {}
 
-    public function __construct(InstallmentService $service)
+    /**
+     * List installments — filterable by status, customer, date range.
+     */
+    public function index(Request $request): View
     {
-        $this->service = $service;
+        $this->authorize('installment.view');
+
+        $branchId = auth()->user()->branch_id;
+
+        $installments = Installment::forBranch($branchId)
+            ->with(['saleInvoice', 'customer'])
+            ->when(
+                $request->status,
+                fn($q, $s) => $q->where('status', $s)
+            )
+            ->when(
+                $request->customer_id,
+                fn($q, $c) => $q->forCustomer((int) $c)
+            )
+            ->when(
+                $request->date_from && $request->date_to,
+                fn($q) => $q->dueBetween($request->date_from, $request->date_to)
+            )
+            ->when(
+                $request->overdue,
+                fn($q) => $q->overdue()
+            )
+            ->orderBy('collect_date')
+            ->paginate(25);
+
+        $overdueCount = Installment::forBranch($branchId)->overdue()->count();
+
+        return view('installments.index', compact('installments', 'overdueCount'));
     }
 
-    public function index(): View
+    /**
+     * Show overdue installments — maps Android latekists screen.
+     */
+    public function overdue(): View
     {
-        Gate::authorize('installment.view');
-        $installments = Installment::with(['customer', 'saleInvoice'])->latest()->paginate(20);
-        return view('dashboard.installments.index', compact('installments'));
+        $this->authorize('installment.view_overdue');
+
+        $branchId     = auth()->user()->branch_id;
+        $installments = $this->installmentService->getOverdue($branchId);
+
+        return view('installments.overdue', compact('installments'));
     }
 
+    /**
+     * Show single installment detail.
+     */
+    public function show(Installment $installment): View
+    {
+        $this->authorize('installment.view');
+
+        $installment->load(['saleInvoice.items', 'customer']);
+
+        return view('installments.show', compact('installment'));
+    }
+
+    /**
+     * Collect (pay) a single installment — maps Android pay_money dialog.
+     */
     public function collect(Request $request, Installment $installment): RedirectResponse
     {
-        Gate::authorize('installment.collect');
-        
-        $request->validate(['pay_type' => 'required|string']);
-        
-        $this->service.collect($installment, $request->only('pay_type'));
+        $this->authorize('installment.collect');
 
-        return back()->with('success', 'Installment collected successfully.');
+        $validated = $request->validate([
+            'pay_type'  => 'required|string|in:cash,card,transfer',
+            'paid_date' => 'required|date',
+        ]);
+
+        try {
+            $this->installmentService->collect($installment, $validated);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['collect' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('dashboard.installments.index')
+            ->with('success', "تم تحصيل القسط بنجاح — {$installment->client_name}");
     }
 
+    /**
+     * Soft delete an installment.
+     */
     public function destroy(Installment $installment): RedirectResponse
     {
-        Gate::authorize('installment.delete');
+        $this->authorize('installment.delete');
+
+        if ($installment->status === Installment::STATUS_PAID) {
+            return back()->withErrors([
+                'delete' => 'لا يمكن حذف قسط مدفوع.',
+            ]);
+        }
+
         $installment->delete();
-        return back()->with('success', 'Installment deleted successfully.');
+
+        return redirect()
+            ->route('dashboard.installments.index')
+            ->with('success', 'تم حذف القسط بنجاح.');
     }
 }
