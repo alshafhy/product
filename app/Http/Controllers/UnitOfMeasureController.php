@@ -7,51 +7,56 @@ use App\Http\Requests\UnitOfMeasure\StoreUnitOfMeasureRequest;
 use App\Http\Requests\UnitOfMeasure\UpdateUnitOfMeasureRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Gate;
 
 class UnitOfMeasureController extends Controller
 {
     public function index(): View
     {
-        Gate::authorize('unit.view');
+        $this->authorize('unit.view');
         $units = UnitOfMeasure::latest()->paginate(20);
-        return view('dashboard.units.index', compact('units'));
+        return view('units.index', compact('units'));
     }
 
     public function create(): View
     {
-        Gate::authorize('unit.create');
-        return view('dashboard.units.create');
+        $this->authorize('unit.create');
+        return view('units.create');
     }
 
     public function store(StoreUnitOfMeasureRequest $request): RedirectResponse
     {
-        UnitOfMeasure::create($request->validated());
-        return redirect()->route('dashboard.units.index')->with('success', 'Unit created successfully.');
+        $unit = UnitOfMeasure::create($request->validated());
+        return redirect()
+            ->route('dashboard.units.show', $unit)
+            ->with('success', 'تم إنشاء وحدة القياس بنجاح.');
     }
 
-    public function show(UnitOfMeasure $unitOfMeasure): View
+    public function show(UnitOfMeasure $unit): View
     {
-        Gate::authorize('unit.view');
-        return view('dashboard.units.show', compact('unitOfMeasure'));
+        $this->authorize('unit.view');
+        return view('units.show', compact('unit'));
     }
 
-    public function edit(UnitOfMeasure $unitOfMeasure): View
+    public function edit(UnitOfMeasure $unit): View
     {
-        Gate::authorize('unit.edit');
-        return view('dashboard.units.edit', compact('unitOfMeasure'));
+        $this->authorize('unit.edit');
+        return view('units.edit', compact('unit'));
     }
 
-    public function update(UpdateUnitOfMeasureRequest $request, UnitOfMeasure $unitOfMeasure): RedirectResponse
+    public function update(UpdateUnitOfMeasureRequest $request, UnitOfMeasure $unit): RedirectResponse
     {
-        $unitOfMeasure->update($request->validated());
-        return redirect()->route('dashboard.units.index')->with('success', 'Unit updated successfully.');
+        $unit->update($request->validated());
+        return redirect()
+            ->route('dashboard.units.show', $unit)
+            ->with('success', 'تم تحديث وحدة القياس بنجاح.');
     }
 
-    public function destroy(UnitOfMeasure $unitOfMeasure): RedirectResponse
+    public function destroy(UnitOfMeasure $unit): RedirectResponse
     {
-        Gate::authorize('unit.delete');
-        $unitOfMeasure->delete();
-        return redirect()->route('dashboard.units.index')->with('success', 'Unit deleted successfully.');
+        $this->authorize('unit.delete');
+        $unit->delete();
+        return redirect()
+            ->route('dashboard.units.index')
+            ->with('success', 'تم حذف وحدة القياس بنجاح.');
     }
 }
