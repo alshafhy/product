@@ -27,7 +27,7 @@ class UnitOfMeasureController extends Controller
     public function store(StoreUnitOfMeasureRequest $request): RedirectResponse
     {
         UnitOfMeasure::create($request->validated());
-        return redirect()->route('units.index')->with('success', 'Unit created successfully.');
+        return redirect()->route('dashboard.units.index')->with('success', 'Unit created successfully.');
     }
 
     public function show(UnitOfMeasure $unitOfMeasure): View
@@ -45,13 +45,13 @@ class UnitOfMeasureController extends Controller
     public function update(UpdateUnitOfMeasureRequest $request, UnitOfMeasure $unitOfMeasure): RedirectResponse
     {
         $unitOfMeasure->update($request->validated());
-        return redirect()->route('units.index')->with('success', 'Unit updated successfully.');
+        return redirect()->route('dashboard.units.index')->with('success', 'Unit updated successfully.');
     }
 
     public function destroy(UnitOfMeasure $unitOfMeasure): RedirectResponse
     {
         Gate::authorize('unit.delete');
         $unitOfMeasure->delete();
-        return redirect()->route('units.index')->with('success', 'Unit deleted successfully.');
+        return redirect()->route('dashboard.units.index')->with('success', 'Unit deleted successfully.');
     }
 }

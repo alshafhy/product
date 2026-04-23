@@ -29,7 +29,7 @@ class CustomerController extends Controller
     public function store(StoreCustomerRequest $request): RedirectResponse
     {
         Customer::create($request->validated());
-        return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
+        return redirect()->route('dashboard.customers.index')->with('success', 'Customer created successfully.');
     }
 
     public function show(Customer $customer): View
@@ -48,13 +48,13 @@ class CustomerController extends Controller
     public function update(UpdateCustomerRequest $request, Customer $customer): RedirectResponse
     {
         $customer->update($request->validated());
-        return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
+        return redirect()->route('dashboard.customers.index')->with('success', 'Customer updated successfully.');
     }
 
     public function destroy(Customer $customer): RedirectResponse
     {
         Gate::authorize('customer.delete');
         $customer->delete();
-        return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+        return redirect()->route('dashboard.customers.index')->with('success', 'Customer deleted successfully.');
     }
 }

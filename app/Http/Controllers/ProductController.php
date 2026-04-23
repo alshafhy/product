@@ -33,7 +33,7 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request): RedirectResponse
     {
         Product::create($request->validated());
-        return redirect()->route('products.index')->with('success', 'Product created successfully.');
+        return redirect()->route('dashboard.products.index')->with('success', 'Product created successfully.');
     }
 
     public function show(Product $product): View
@@ -54,13 +54,13 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
         $product->update($request->validated());
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        return redirect()->route('dashboard.products.index')->with('success', 'Product updated successfully.');
     }
 
     public function destroy(Product $product): RedirectResponse
     {
         Gate::authorize('product.delete');
         $product->delete();
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+        return redirect()->route('dashboard.products.index')->with('success', 'Product deleted successfully.');
     }
 }

@@ -47,7 +47,7 @@ class PurchaseInvoiceController extends Controller
             $request->boolean('update_product_prices')
         );
 
-        return redirect()->route('purchase_invoices.show', $invoice->id)
+        return redirect()->route('dashboard.purchase-invoices.show', $invoice->id)
             ->with('success', 'Purchase recorded successfully.');
     }
 
@@ -76,6 +76,6 @@ class PurchaseInvoiceController extends Controller
     {
         Gate::authorize('purchase_invoice.delete');
         $purchaseInvoice->delete();
-        return redirect()->route('purchase_invoices.index')->with('success', 'Invoice deleted successfully.');
+        return redirect()->route('dashboard.purchase-invoices.index')->with('success', 'Invoice deleted successfully.');
     }
 }

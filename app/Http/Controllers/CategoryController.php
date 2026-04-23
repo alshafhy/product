@@ -28,7 +28,7 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request): RedirectResponse
     {
         Category::create($request->validated());
-        return redirect()->route('categories.index')->with('success', 'Category created successfully.');
+        return redirect()->route('dashboard.categories.index')->with('success', 'Category created successfully.');
     }
 
     public function show(Category $category): View
@@ -47,13 +47,13 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
     {
         $category->update($request->validated());
-        return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
+        return redirect()->route('dashboard.categories.index')->with('success', 'Category updated successfully.');
     }
 
     public function destroy(Category $category): RedirectResponse
     {
         Gate::authorize('category.delete');
         $category->delete();
-        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+        return redirect()->route('dashboard.categories.index')->with('success', 'Category deleted successfully.');
     }
 }

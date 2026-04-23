@@ -44,7 +44,7 @@ class SaleInvoiceController extends Controller
 
         $invoice = $this->service.create($header, $request->input('items'));
 
-        return redirect()->route('sale_invoices.show', $invoice->id)
+        return redirect()->route('dashboard.sale-invoices.show', $invoice->id)
             ->with('success', 'Invoice created successfully.');
     }
 
@@ -73,6 +73,6 @@ class SaleInvoiceController extends Controller
     {
         Gate::authorize('sale_invoice.delete');
         $saleInvoice->delete();
-        return redirect()->route('sale_invoices.index')->with('success', 'Invoice deleted successfully.');
+        return redirect()->route('dashboard.sale-invoices.index')->with('success', 'Invoice deleted successfully.');
     }
 }

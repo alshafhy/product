@@ -29,7 +29,7 @@ class SupplierController extends Controller
     public function store(StoreSupplierRequest $request): RedirectResponse
     {
         Supplier::create($request->validated());
-        return redirect()->route('suppliers.index')->with('success', 'Supplier created successfully.');
+        return redirect()->route('dashboard.suppliers.index')->with('success', 'Supplier created successfully.');
     }
 
     public function show(Supplier $supplier): View
@@ -48,13 +48,13 @@ class SupplierController extends Controller
     public function update(UpdateSupplierRequest $request, Supplier $supplier): RedirectResponse
     {
         $supplier->update($request->validated());
-        return redirect()->route('suppliers.index')->with('success', 'Supplier updated successfully.');
+        return redirect()->route('dashboard.suppliers.index')->with('success', 'Supplier updated successfully.');
     }
 
     public function destroy(Supplier $supplier): RedirectResponse
     {
         Gate::authorize('supplier.delete');
         $supplier->delete();
-        return redirect()->route('suppliers.index')->with('success', 'Supplier deleted successfully.');
+        return redirect()->route('dashboard.suppliers.index')->with('success', 'Supplier deleted successfully.');
     }
 }
