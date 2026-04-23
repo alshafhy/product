@@ -306,42 +306,57 @@ Route::middleware(['auth', 'acl'])->group(function () {
 Route::resource('sizes', App\Http\Controllers\SizeController::class);
 Route::resource('colors', App\Http\Controllers\ColorController::class);
 
-// CashPOS routes
-Route::middleware(['auth'])->group(function () {
+// ── POS Dashboard Routes ─────────────────────────────────────────────
+Route::middleware(['auth'])->prefix('dashboard')->group(function () {
+    
+    // Core Resources
+    Route::resource('categories', \App\Http\Controllers\CategoryController::class);
+    Route::resource('units-of-measure', \App\Http\Controllers\UnitOfMeasureController::class);
+    Route::resource('products', \App\Http\Controllers\ProductController::class);
+    Route::resource('customers', \App\Http\Controllers\CustomerController::class);
+    Route::resource('suppliers', \App\Http\Controllers\SupplierController::class);
+
     // Sale Invoices
-    Route::get('sale-invoices', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'index'])->name('saleInvoices.index');
-    Route::get('sale-invoices/create', fn() => view('pos.sales.create'))->name('saleInvoices.create');
-    Route::post('sale-invoices', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'store'])->name('saleInvoices.store');
-    Route::get('sale-invoices/{saleInvoice}', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'show'])->name('saleInvoices.show');
-    Route::patch('sale-invoices/{saleInvoice}/void', [\App\Http\Controllers\POS\SaleInvoiceController::class, 'void'])->name('saleInvoices.void');
+    Route::resource('sale-invoices', \App\Http\Controllers\SaleInvoiceController::class)->except(['edit', 'update']);
+    Route::post('sale-invoices/{sale_invoice}/collect-debt', [\App\Http\Controllers\SaleInvoiceController::class, 'collectDebt'])
+        ->name('sale-invoices.collect-debt')
+        ->middleware('permission:sale_invoice.collect_debt');
 
     // Purchase Invoices
-    Route::get('purchase-invoices', [\App\Http\Controllers\POS\PurchaseInvoiceController::class, 'index'])->name('purchaseInvoices.index');
-    Route::get('purchase-invoices/create', fn() => view('pos.purchase-invoices.create'))->name('purchaseInvoices.create');
-    Route::post('purchase-invoices', [\App\Http\Controllers\POS\PurchaseInvoiceController::class, 'store'])->name('purchaseInvoices.store');
-    Route::get('purchase-invoices/{purchaseInvoice}', [\App\Http\Controllers\POS\PurchaseInvoiceController::class, 'show'])->name('purchaseInvoices.show');
-
-    // Customers
-    Route::resource('customers', \App\Http\Controllers\POS\CustomerController::class)->only(['index', 'store', 'show', 'update']);
-
-    // Suppliers
-    Route::resource('suppliers', \App\Http\Controllers\POS\SupplierController::class)->only(['index', 'store', 'show', 'update']);
-
-    // Products (POS)
-    Route::resource('products', \App\Http\Controllers\POS\ProductController::class);
-
-    // Categories
-    Route::resource('categories', \App\Http\Controllers\POS\CategoryController::class)->only(['index', 'store', 'show', 'update']);
+    Route::resource('purchase-invoices', \App\Http\Controllers\PurchaseInvoiceController::class)->except(['edit', 'update']);
+    Route::post('purchase-invoices/{purchase_invoice}/pay-supplier', [\App\Http\Controllers\PurchaseInvoiceController::class, 'paySupplier'])
+        ->name('purchase-invoices.pay-supplier')
+        ->middleware('permission:purchase_invoice.pay_supplier');
 
     // Treasury
-    Route::get('treasury-transactions', [\App\Http\Controllers\POS\TreasuryController::class, 'index'])->name('treasuryTransactions.index');
-    Route::get('treasury-transactions/create', fn() => view('pos.treasury.create'))->name('treasuryTransactions.create');
-    Route::post('treasury-transactions/deposit', [\App\Http\Controllers\POS\TreasuryController::class, 'deposit'])->name('treasuryTransactions.deposit');
-    Route::post('treasury-transactions/withdraw', [\App\Http\Controllers\POS\TreasuryController::class, 'withdraw'])->name('treasuryTransactions.withdraw');
+    Route::get('treasury', [\App\Http\Controllers\TreasuryController::class, 'index'])->name('treasury.index')
+        ->middleware('permission:treasury.view');
+    Route::post('treasury/deposit', [\App\Http\Controllers\TreasuryController::class, 'deposit'])->name('treasury.deposit')
+        ->middleware('permission:treasury.deposit');
+    Route::post('treasury/withdraw', [\App\Http\Controllers\TreasuryController::class, 'withdraw'])->name('treasury.withdraw')
+        ->middleware('permission:treasury.withdraw');
+    Route::post('treasury/expense', [\App\Http\Controllers\TreasuryController::class, 'expense'])->name('treasury.expense')
+        ->middleware('permission:treasury.expense');
 
     // Installments
-    Route::get('installments', [\App\Http\Controllers\POS\InstallmentController::class, 'index'])->name('installments.index');
-    Route::post('installments', [\App\Http\Controllers\POS\InstallmentController::class, 'store'])->name('installments.store');
-    Route::patch('installments/{installment}/collect', [\App\Http\Controllers\POS\InstallmentController::class, 'collect'])->name('installments.collect');
-    Route::get('installments/overdue', [\App\Http\Controllers\POS\InstallmentController::class, 'overdue'])->name('installments.overdue');
+    Route::resource('installments', \App\Http\Controllers\InstallmentController::class)->only(['index', 'destroy']);
+    Route::post('installments/{installment}/collect', [\App\Http\Controllers\InstallmentController::class, 'collect'])
+        ->name('installments.collect')
+        ->middleware('permission:installment.collect');
+
+    // Reports
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('sales', [\App\Http\Controllers\ReportController::class, 'sales'])->name('sales')
+            ->middleware('permission:report.sales');
+        Route::get('stock', [\App\Http\Controllers\ReportController::class, 'stock'])->name('stock')
+            ->middleware('permission:report.stock');
+        Route::get('customers', [\App\Http\Controllers\ReportController::class, 'customers'])->name('customers')
+            ->middleware('permission:report.customers');
+        Route::get('suppliers', [\App\Http\Controllers\ReportController::class, 'suppliers'])->name('suppliers')
+            ->middleware('permission:report.suppliers');
+        Route::get('treasury', [\App\Http\Controllers\ReportController::class, 'treasury'])->name('treasury')
+            ->middleware('permission:report.treasury');
+        Route::get('installments', [\App\Http\Controllers\ReportController::class, 'installments'])->name('installments')
+            ->middleware('permission:report.installments');
+    });
 });

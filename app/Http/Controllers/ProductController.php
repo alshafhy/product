@@ -2,140 +2,65 @@
 
 namespace App\Http\Controllers;
 
-use App\DataTables\ProductDataTable;
-use App\Http\Requests\CreateProductRequest;
-use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use App\Models\ProductImage;
-use App\Models\Size;
-use App\Models\Color;
-use Flash;
-use App\Http\Controllers\AppBaseController;
-use Response;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Category;
+use App\Models\UnitOfMeasure;
+use App\Models\Branch;
+use App\Http\Requests\Product\StoreProductRequest;
+use App\Http\Requests\Product\UpdateProductRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Illuminate\Support\Facades\Gate;
 
-class ProductController extends AppBaseController
+class ProductController extends Controller
 {
-    public function index(ProductDataTable $productDataTable)
+    public function index(): View
     {
-        return $productDataTable->render('products.index');
+        Gate::authorize('product.view');
+        $products = Product::with(['category', 'unit', 'branch'])->latest()->paginate(20);
+        return view('dashboard.products.index', compact('products'));
     }
 
-    public function create()
+    public function create(): View
     {
-        $sizes = Size::pluck('name', 'id');
-        $colors = Color::pluck('name', 'id');
-
-        return view('products.create', compact('sizes', 'colors'));
+        Gate::authorize('product.create');
+        $categories = Category::all();
+        $units = UnitOfMeasure::all();
+        $branches = Branch::all();
+        return view('dashboard.products.create', compact('categories', 'units', 'branches'));
     }
 
-    public function store(CreateProductRequest $request)
+    public function store(StoreProductRequest $request): RedirectResponse
     {
-        $input = $request->except('images');
-
-        $product = Product::create($input);
-
-        // Handle multiple image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('products', 'public');
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => $path
-                ]);
-            }
-        }
-
-        Flash::success('Product saved successfully.');
-
-        return redirect(route('products.index'));
+        Product::create($request->validated());
+        return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
-    public function show($id)
+    public function show(Product $product): View
     {
-        $product = Product::with(['size', 'color', 'images'])->find($id);
-
-        if (empty($product)) {
-            Flash::error('Product not found');
-            return redirect(route('products.index'));
-        }
-
-        return view('products.show')->with('product', $product);
+        Gate::authorize('product.view');
+        return view('dashboard.products.show', compact('product'));
     }
 
-    public function edit($id)
+    public function edit(Product $product): View
     {
-        $product = Product::with('images')->find($id);
-
-        if (empty($product)) {
-            Flash::error('Product not found');
-            return redirect(route('products.index'));
-        }
-
-        $sizes = Size::pluck('name', 'id');
-        $colors = Color::pluck('name', 'id');
-
-        return view('products.edit', compact('product', 'sizes', 'colors'));
+        Gate::authorize('product.edit');
+        $categories = Category::all();
+        $units = UnitOfMeasure::all();
+        $branches = Branch::all();
+        return view('dashboard.products.edit', compact('product', 'categories', 'units', 'branches'));
     }
 
-    public function update($id, UpdateProductRequest $request)
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $product = Product::find($id);
-
-        if (empty($product)) {
-            Flash::error('Product not found');
-            return redirect(route('products.index'));
-        }
-
-        $product->fill($request->except(['images', 'delete_images']));
-        $product->save();
-
-        // Handle image deletions
-        if ($request->has('delete_images')) {
-            foreach ($request->delete_images as $imageId) {
-                $image = ProductImage::find($imageId);
-                if ($image && $image->product_id == $product->id) {
-                    Storage::disk('public')->delete($image->image_path);
-                    $image->delete();
-                }
-            }
-        }
-
-        // Handle new image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('products', 'public');
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => $path
-                ]);
-            }
-        }
-
-        Flash::success('Product updated successfully.');
-
-        return redirect(route('products.index'));
+        $product->update($request->validated());
+        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Product $product): RedirectResponse
     {
-        $product = Product::with('images')->find($id);
-
-        if (empty($product)) {
-            Flash::error('Product not found');
-            return redirect(route('products.index'));
-        }
-
-        // Delete all associated images
-        foreach ($product->images as $image) {
-            Storage::disk('public')->delete($image->image_path);
-            $image->delete();
-        }
-
+        Gate::authorize('product.delete');
         $product->delete();
-
-        Flash::success('Product deleted successfully.');
-
-        return redirect(route('products.index'));
+        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 }
