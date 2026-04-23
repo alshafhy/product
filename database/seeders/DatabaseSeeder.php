@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             FoundationSeeder::class,
             ProductPermissionsSeeder::class,
             CustomerSupplierPermissionsSeeder::class,
+            SaleInvoicePermissionsSeeder::class,
         ]);
     }
 }

@@ -2,37 +2,34 @@
 
 namespace Database\Seeders;
 
-use App\Overrides\Spatie\Permission;
-use App\Overrides\Spatie\Role;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class SaleInvoicePermissionsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // 1. Spatie Permissions
         $permissions = [
             'sale_invoice.view',
             'sale_invoice.create',
             'sale_invoice.edit',
             'sale_invoice.delete',
-            'sale_invoice.void',
+            'sale_invoice.cancel',
+            'sale_invoice.view_profit',   // hide profit from cashier
+            'sale_invoice.collect_debt',  // record payment on unpaid invoice
+            'sale_invoice.apply_discount',
         ];
 
-        foreach ($permissions as $permissionName) {
-            Permission::updateOrCreate(
-                ['name' => $permissionName, 'guard_name' => 'web'],
-                ['name' => $permissionName, 'guard_name' => 'web']
+        foreach ($permissions as $perm) {
+            Permission::firstOrCreate(
+                ['name' => $perm, 'guard_name' => 'web']
             );
         }
 
-        // 2. Assign to super-admin role
-        $superAdminRole = Role::where('name', 'super-admin')->first();
-        if ($superAdminRole) {
-            $superAdminRole->givePermissionTo($permissions);
-        }
+        Role::where('name', 'super-admin')->first()
+            ?->givePermissionTo($permissions);
+
+        $this->command->info('✅ Sale invoice permissions seeded.');
     }
 }

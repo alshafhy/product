@@ -2,139 +2,182 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
+use App\Models\Product;
 use App\Models\SaleInvoice;
 use App\Models\SaleInvoiceItem;
-use App\Models\Product;
-use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class SaleInvoiceService
 {
     /**
-     * Create a new sale invoice with all associated logic.
+     * Create a complete sale invoice atomically.
+     *
+     * @param  array  $header   Invoice-level data
+     * @param  array  $items    Array of line item data
+     * @return SaleInvoice
+     *
+     * @throws \RuntimeException|\InvalidArgumentException
      */
-    public function createInvoice(array $data, array $items): SaleInvoice
+    public function create(array $header, array $items): SaleInvoice
     {
-        return DB::transaction(function () use ($data, $items) {
-            // 1. Calculate Totals
-            $totals = $this->calculateTotals($items, $data['discount'] ?? '0', $data['discount_type'] ?? 'value');
-            
-            // 2. Prepare Invoice Data
-            $invoiceData = array_merge($data, $totals);
-            $invoiceData['invoice_number'] = $this->generateInvoiceNumber($data['branch_id']);
-            $invoiceData['remaining'] = bcsub($totals['total'], $data['paid'] ?? '0', 4);
-            $invoiceData['invoiced_at'] = $data['invoiced_at'] ?? now();
-            
-            // Calculate Debt if Customer exists
-            if (!empty($data['customer_id'])) {
-                $customer = Customer::findOrFail($data['customer_id']);
-                $invoiceData['previous_debt'] = (string) $customer->current_balance;
-                $invoiceData['total_debt'] = bcadd($invoiceData['previous_debt'], $invoiceData['remaining'], 4);
+        if (empty($items)) {
+            throw new \InvalidArgumentException('A sale invoice must have at least one item.');
+        }
+
+        return DB::transaction(function () use ($header, $items) {
+
+            // ── 1. Resolve customer & snapshot previous debt ──────
+            $customer     = null;
+            $previousDebt = '0.0000';
+
+            if (!empty($header['customer_id'])) {
+                $customer     = Customer::lockForUpdate()->findOrFail($header['customer_id']);
+                $previousDebt = $customer->current_debt; // accessor from Prompt 3
+
+                // Enforce credit limit
+                if ($customer->isOverCreditLimit()) {
+                    throw new \RuntimeException(
+                        "Customer [{$customer->name}] has exceeded their credit limit."
+                    );
+                }
             }
 
-            $invoice = SaleInvoice::create($invoiceData);
+            // ── 2. Calculate totals from items ────────────────────
+            $subtotal = '0.0000';
+            $totalCost = '0.0000';
+            $resolvedItems = [];
 
-            // 3. Create Items & Record Snapshots
             foreach ($items as $item) {
-                $product = Product::findOrFail($item['product_id']);
-                
-                SaleInvoiceItem::create([
-                    'sale_invoice_id' => $invoice->id,
-                    'product_id' => $product->id,
+                /** @var Product $product */
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                // Decrement stock — throws if insufficient
+                $product->decrementStock((float) $item['quantity']);
+
+                $lineTotal = bcmul(
+                    (string) $item['sell_price'],
+                    (string) $item['quantity'],
+                    4
+                );
+                $lineCost = bcmul(
+                    (string) ($item['buy_price'] ?? $product->buy_price),
+                    (string) $item['quantity'],
+                    4
+                );
+
+                $subtotal  = bcadd($subtotal, $lineTotal, 4);
+                $totalCost = bcadd($totalCost, $lineCost, 4);
+
+                $resolvedItems[] = [
+                    'product_id'   => $product->id,
+                    'product_code' => $product->code_id,
                     'product_name' => $product->name,
-                    'code_id' => $product->code_id,
-                    'quantity' => $item['quantity'],
-                    'unit_factor' => $item['unit_factor'] ?? '1',
-                    'unit_name' => $item['unit_name'] ?? $product->unit1,
-                    'price_type' => $item['price_type'] ?? 'one',
-                    'sell_price' => $item['sell_price'],
-                    'buy_price' => (string) $product->buy_price,
-                    'line_total' => bcmul($item['quantity'], $item['sell_price'], 4),
-                ]);
+                    'price_type'   => $item['price_type']  ?? 'one',
+                    'unit_name'    => $item['unit_name']   ?? null,
+                    'unit_factor'  => $item['unit_factor'] ?? 1,
+                    'quantity'     => $item['quantity'],
+                    'sell_price'   => $item['sell_price'],
+                    'buy_price'    => $item['buy_price'] ?? $product->buy_price,
+                    'line_total'   => $lineTotal,
+                ];
             }
 
-            // 4. Update Stock & Customer Debt
-            $this->updateStock($invoice);
-            $this->handleDebt($invoice);
+            // ── 3. Apply discount ─────────────────────────────────
+            $discountAmount = '0.0000';
+            $discountType   = $header['discount_type'] ?? SaleInvoice::DISCOUNT_FIXED;
 
-            return $invoice;
+            if (!empty($header['discount_amount']) && (float) $header['discount_amount'] > 0) {
+                if ($discountType === SaleInvoice::DISCOUNT_PERCENT) {
+                    $discountAmount = bcmul(
+                        $subtotal,
+                        bcdiv((string) $header['discount_amount'], '100', 6),
+                        4
+                    );
+                } else {
+                    $discountAmount = (string) $header['discount_amount'];
+                }
+            }
+
+            $total  = bcsub($subtotal, $discountAmount, 4);
+            $profit = bcsub($total, $totalCost, 4);
+
+            // ── 4. Payment resolution ─────────────────────────────
+            $paidAmount = (string) ($header['paid_amount'] ?? $total);
+            $remaining  = bcsub($total, $paidAmount, 4);
+
+            if (bccomp($remaining, '0', 4) < 0) {
+                $remaining = '0.0000'; // overpayment — handle as credit separately
+            }
+
+            $status = match (true) {
+                bccomp($remaining, '0', 4) <= 0 => SaleInvoice::STATUS_PAID,
+                bccomp($paidAmount, '0', 4) === 0 => SaleInvoice::STATUS_UNPAID,
+                default                           => SaleInvoice::STATUS_PARTIAL,
+            };
+
+            $paymentType = $header['payment_type'] ?? match ($status) {
+                SaleInvoice::STATUS_PAID    => SaleInvoice::PAYMENT_CASH,
+                SaleInvoice::STATUS_UNPAID  => SaleInvoice::PAYMENT_CREDIT,
+                default                     => SaleInvoice::PAYMENT_PARTIAL,
+            };
+
+            // ── 5. Persist invoice ────────────────────────────────
+            $invoice = SaleInvoice::create([
+                'branch_id'       => $header['branch_id'],
+                'invoice_number'  => SaleInvoice::generateInvoiceNumber($header['branch_id']),
+                'invoice_date'    => $header['invoice_date'] ?? today(),
+                'customer_id'     => $customer?->id,
+                'customer_name'   => $customer?->name ?? ($header['customer_name'] ?? null),
+                'cashier_id'      => $header['cashier_id'],
+                'cashier_name'    => $header['cashier_name'],
+                'subtotal'        => $subtotal,
+                'discount_amount' => $discountAmount,
+                'discount_type'   => $discountType,
+                'total'           => $total,
+                'cost'            => $totalCost,
+                'profit'          => $profit,
+                'payment_type'    => $paymentType,
+                'paid_amount'     => $paidAmount,
+                'remaining_amount' => $remaining,
+                'previous_debt'   => $previousDebt,
+                'status'          => $status,
+                'notes'           => $header['notes'] ?? null,
+                'created_by'      => $header['cashier_id'],
+            ]);
+
+            // ── 6. Persist line items ─────────────────────────────
+            foreach ($resolvedItems as $item) {
+                $invoice->items()->create($item);
+            }
+
+            // ── 7. Update customer financials ─────────────────────
+            if ($customer) {
+                $customer->addInvoiceTotal((float) $total);
+                if (bccomp($paidAmount, '0', 4) > 0) {
+                    $customer->recordPayment((float) $paidAmount);
+                }
+            }
+
+            return $invoice->load('items');
         });
     }
 
     /**
-     * Calculate financial totals using BCMath.
+     * Collect a payment against an existing invoice.
+     * Mirrors the Android "collect debt" flow.
      */
-    public function calculateTotals(array $items, string $discount, string $discountType): array
+    public function collectPayment(SaleInvoice $invoice, float $amount): SaleInvoice
     {
-        $subtotal = '0';
-        $cost = '0';
+        return DB::transaction(function () use ($invoice, $amount) {
+            $invoice->lockForUpdate();
+            $invoice->recordPayment($amount);
 
-        foreach ($items as $item) {
-            $product = Product::findOrFail($item['product_id']);
-            $lineTotal = bcmul((string) $item['quantity'], (string) $item['sell_price'], 4);
-            $lineCost = bcmul((string) $item['quantity'], (string) $product->buy_price, 4);
-            
-            $subtotal = bcadd($subtotal, $lineTotal, 4);
-            $cost = bcadd($cost, $lineCost, 4);
-        }
+            if ($invoice->customer) {
+                $invoice->customer->recordPayment($amount);
+            }
 
-        $discountValue = '0';
-        if ($discountType === 'percent') {
-            // formula: (subtotal * discount) / 100
-            $discountValue = bcdiv(bcmul($subtotal, $discount, 4), '100', 4);
-        } else {
-            $discountValue = $discount;
-        }
-
-        $total = bcsub($subtotal, $discountValue, 4);
-        $profit = bcsub($total, $cost, 4);
-
-        return [
-            'subtotal' => $subtotal,
-            'discount' => $discountValue,
-            'total' => $total,
-            'cost' => $cost,
-            'profit' => $profit,
-        ];
-    }
-
-    /**
-     * Deduct stock based on unit factors.
-     */
-    public function updateStock(SaleInvoice $invoice): void
-    {
-        foreach ($invoice->items as $item) {
-            $product = $item->product;
-            // deduct: quantity * factor
-            $deduction = bcmul((string) $item->quantity, (string) $item->unit_factor, 4);
-            $product->decrement('quantity', (float) $deduction);
-        }
-    }
-
-    /**
-     * Update customer balance if debt exists.
-     */
-    public function handleDebt(SaleInvoice $invoice): void
-    {
-        if ($invoice->customer_id && ($invoice->payment_type === 'debt' || $invoice->payment_type === 'partial')) {
-            $customer = $invoice->customer;
-            $customer->recalculateBalance();
-        }
-    }
-
-    /**
-     * Generate unique invoice number.
-     */
-    public function generateInvoiceNumber(int $branchId): string
-    {
-        $date = now()->format('Ymd');
-        $count = SaleInvoice::where('branch_id', $branchId)
-            ->whereDate('created_at', Carbon::today())
-            ->count() + 1;
-            
-        $seq = str_pad($count, 4, '0', STR_PAD_LEFT);
-        
-        return "INV-{$branchId}-{$date}-{$seq}";
+            return $invoice->fresh();
+        });
     }
 }
