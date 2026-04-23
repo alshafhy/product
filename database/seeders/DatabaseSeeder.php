@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             TreasuryPermissionsSeeder::class,
             InstallmentPermissionsSeeder::class,
             FoundationSeeder::class,
+            ProductPermissionsSeeder::class,
+            CustomerSupplierPermissionsSeeder::class,
         ]);
     }
 }

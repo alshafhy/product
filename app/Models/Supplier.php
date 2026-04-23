@@ -2,81 +2,142 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Supplier extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
-    /**
-     * The attributes that are mass fillable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
+        'branch_id',
         'name',
         'phone',
         'address',
-        'opening_balance',
-        'current_balance',
         'notes',
-        'branch_id',
+        'paid_amount',
+        'total_invoiced',
+        'balance_adjustment',
+        'is_active',
         'created_by',
         'updated_by',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'opening_balance' => 'decimal:4',
-        'current_balance' => 'decimal:4',
+        'paid_amount'          => 'decimal:4',
+        'total_invoiced'       => 'decimal:4',
+        'balance_adjustment'   => 'decimal:4',
+        'is_active'            => 'boolean',
     ];
 
-    /**
-     * Configuration for activity logging.
-     */
+    // ── Activity Log ─────────────────────────────────────────────
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->logOnlyDirty();
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $e) => "Supplier {$e}");
     }
 
-    /**
-     * Recalculate the supplier's current balance based on unpaid purchase invoices.
-     */
-    public function recalculateBalance(): void
+    // ── Relations ────────────────────────────────────────────────
+    public function branch(): BelongsTo
     {
-        $opening = (string) $this->opening_balance;
-        
-        $unpaidTotal = (string) $this->purchaseInvoices()
-            ->where('remaining', '>', 0)
-            ->sum('remaining');
-
-        $newBalance = bcadd($opening, $unpaidTotal, 4);
-
-        $this->update(['current_balance' => $newBalance]);
+        return $this->belongsTo(Branch::class);
     }
-
-    /**
-     * Relations
-     */
 
     public function purchaseInvoices(): HasMany
     {
         return $this->hasMany(PurchaseInvoice::class);
     }
 
-    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(Branch::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // ── Accessors ─────────────────────────────────────────────────
+
+    /**
+     * Net balance owed to supplier.
+     * = total_invoiced - paid_amount + balance_adjustment
+     */
+    public function getNetBalanceAttribute(): string
+    {
+        $base = bcsub(
+            (string) $this->total_invoiced,
+            (string) $this->paid_amount,
+            4
+        );
+
+        return bcadd($base, (string) $this->balance_adjustment, 4);
+    }
+
+    // ── Scopes ───────────────────────────────────────────────────
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeForBranch($query, int $branchId)
+    {
+        return $query->where('branch_id', $branchId);
+    }
+
+    public function scopeSearch($query, string $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+              ->orWhere('phone', 'like', "%{$term}%");
+        });
+    }
+
+    // ── Business Logic ───────────────────────────────────────────
+
+    /**
+     * Record a payment made TO this supplier.
+     */
+    public function recordPayment(float $amount): void
+    {
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Payment amount must be positive.');
+        }
+
+        $this->paid_amount = bcadd(
+            (string) $this->paid_amount,
+            (string) $amount,
+            4
+        );
+        $this->save();
+    }
+
+    /**
+     * Add a purchase invoice total to supplier's account.
+     */
+    public function addInvoiceTotal(float $amount): void
+    {
+        $this->total_invoiced = bcadd(
+            (string) $this->total_invoiced,
+            (string) $amount,
+            4
+        );
+        $this->save();
+    }
+
+    /**
+     * Apply manual balance correction (maps to remove_supplier_error dialog).
+     */
+    public function applyBalanceAdjustment(float $amount): void
+    {
+        $this->balance_adjustment = bcadd(
+            (string) $this->balance_adjustment,
+            (string) $amount,
+            4
+        );
+        $this->save();
     }
 }

@@ -2,121 +2,183 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Product extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
-    /**
-     * The attributes that are mass fillable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
-        'code_id',
-        'name',
-        'description',
+        'branch_id',
         'category_id',
-        'sell_price',
-        'buy_price',
-        'sell_price2',
-        'buy_price2',
-        'sell_price3',
-        'buy_price3',
-        'quantity',
-        'unit1',
-        'unit2',
-        'unit3',
-        'factor2',
-        'factor3',
-        'sell_price_unit2',
-        'sell_price_unit3',
+        'code_id',
         'barcode2',
         'barcode3',
+        'name',
+        'description',
         'expire_date',
-        'branch_id',
+        // Unit tier 1
+        'unit_id',
+        'buy_price',
+        'sell_price',
+        // Unit tier 2
+        'unit2_name',
+        'factor2',
+        'buy_price2',
+        'sell_price2',
+        'sell_price_unit2',
+        // Unit tier 3
+        'unit3_name',
+        'factor3',
+        'buy_price3',
+        'sell_price3',
+        'sell_price_unit3',
+        // Stock
+        'quantity',
+        'min_quantity',
+        'is_active',
         'created_by',
         'updated_by',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'sell_price' => 'decimal:4',
-        'buy_price' => 'decimal:4',
-        'sell_price2' => 'decimal:4',
-        'buy_price2' => 'decimal:4',
-        'sell_price3' => 'decimal:4',
-        'buy_price3' => 'decimal:4',
-        'quantity' => 'decimal:4',
-        'factor2' => 'decimal:4',
-        'factor3' => 'decimal:4',
-        'sell_price_unit2' => 'decimal:4',
-        'sell_price_unit3' => 'decimal:4',
-        'expire_date' => 'date',
+        'buy_price'          => 'decimal:4',
+        'sell_price'         => 'decimal:4',
+        'buy_price2'         => 'decimal:4',
+        'sell_price2'        => 'decimal:4',
+        'sell_price_unit2'   => 'decimal:4',
+        'buy_price3'         => 'decimal:4',
+        'sell_price3'        => 'decimal:4',
+        'sell_price_unit3'   => 'decimal:4',
+        'factor2'            => 'decimal:4',
+        'factor3'            => 'decimal:4',
+        'quantity'           => 'decimal:4',
+        'min_quantity'       => 'decimal:4',
+        'expire_date'        => 'date',
+        'is_active'          => 'boolean',
     ];
 
-    /**
-     * Configuration for activity logging.
-     */
+    // ── Activity Log ─────────────────────────────────────────────
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->logOnlyDirty();
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $e) => "Product {$e}");
     }
 
-    /**
-     * Get the effective sell price using BCMath.
-     * 
-     * @param string $priceType The column name (e.g. 'sell_price', 'sell_price2')
-     * @return string
-     */
-    public function getEffectiveSellPrice(string $priceType): string
+    // ── Relations ────────────────────────────────────────────────
+    public function branch(): BelongsTo
     {
-        $price = (string) ($this->{$priceType} ?? '0');
-        // Ensure it's a valid bcmath string (normalized)
-        return bcadd('0', $price, 4);
+        return $this->belongsTo(Branch::class);
     }
-
-    /**
-     * Scope for low stock identification.
-     */
-    public function scopeLowStock($query, $threshold = 5)
-    {
-        return $query->where('quantity', '<=', $threshold);
-    }
-
-    /**
-     * Relations
-     */
 
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function branch(): BelongsTo
+    public function unit(): BelongsTo
     {
-        return $this->belongsTo(Branch::class);
+        return $this->belongsTo(UnitOfMeasure::class, 'unit_id');
     }
 
-    public function creator(): BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function updater(): BelongsTo
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Polymorphic attachments (replaces Android IMAGE blob).
+     */
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    // ── Scopes ───────────────────────────────────────────────────
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeForBranch($query, int $branchId)
+    {
+        return $query->where('branch_id', $branchId);
+    }
+
+    public function scopeLowStock($query)
+    {
+        return $query->whereColumn('quantity', '<=', 'min_quantity')
+                     ->where('min_quantity', '>', 0);
+    }
+
+    public function scopeSearch($query, string $term)
+    {
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'like', "%{$term}%")
+              ->orWhere('code_id', 'like', "%{$term}%")
+              ->orWhere('barcode2', 'like', "%{$term}%")
+              ->orWhere('barcode3', 'like', "%{$term}%");
+        });
+    }
+
+    // ── Business Logic Helpers ───────────────────────────────────
+
+    /**
+     * Resolve sell price by unit tier (1, 2, or 3).
+     * Mirrors Android's price selection logic.
+     */
+    public function getSellPriceForTier(int $tier = 1): string
+    {
+        return match ($tier) {
+            2 => $this->sell_price2 ?? $this->sell_price,
+            3 => $this->sell_price3 ?? $this->sell_price,
+            default => $this->sell_price,
+        };
+    }
+
+    /**
+     * Reduce stock quantity. Always use this — never update quantity directly.
+     * Throws if stock would go negative.
+     */
+    public function decrementStock(float $qty): void
+    {
+        if (bccomp((string) $this->quantity, (string) $qty, 4) < 0) {
+            throw new \RuntimeException(
+                "Insufficient stock for product [{$this->code_id}]. " .
+                "Available: {$this->quantity}, Requested: {$qty}"
+            );
+        }
+
+        $this->decrement('quantity', $qty);
+    }
+
+    /**
+     * Increase stock quantity (on purchase or return).
+     */
+    public function incrementStock(float $qty): void
+    {
+        $this->increment('quantity', $qty);
+    }
+
+    /**
+     * Check if product is below minimum stock threshold.
+     */
+    public function isLowStock(): bool
+    {
+        return $this->min_quantity > 0
+            && bccomp((string) $this->quantity, (string) $this->min_quantity, 4) <= 0;
     }
 }
