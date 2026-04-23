@@ -2,90 +2,54 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Installment extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
-    /**
-     * The attributes that are mass fillable.
-     *
-     * @var array<int, string>
-     */
+    const STATUS_NOT_PAID = 'not_paid';
+    const STATUS_PAID     = 'paid';
+
     protected $fillable = [
         'sale_invoice_id',
         'customer_id',
+        'client_name',
+        'description',
+        'days_limit',
+        'collect_date',
         'amount',
-        'due_date',
-        'paid_date',
         'status',
-        'payment_type',
+        'pay_type',
         'guarantor_name',
         'guarantor_phone',
-        'days_limit',
-        'description',
+        'paid_date',
         'created_by',
+        'updated_by',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'amount' => 'decimal:4',
-        'due_date' => 'date',
-        'paid_date' => 'date',
+        'days_limit'   => 'integer',
+        'collect_date' => 'date',
+        'amount'       => 'decimal:4',
+        'paid_date'    => 'date',
     ];
 
-    /**
-     * Configuration for activity logging.
-     */
+    // ── Activity Log ─────────────────────────────────────────────
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logFillable()
-            ->logOnlyDirty();
+            ->logOnly(['status', 'paid_date', 'pay_type'])
+            ->logOnlyDirty()
+            ->setDescriptionForEvent(fn(string $e) => "Installment {$e}");
     }
 
-    /**
-     * Scope for overdue installments.
-     */
-    public function scopeOverdue($query)
-    {
-        return $query->where('due_date', '<', now()->toDateString())
-            ->where('status', 'not_paid');
-    }
-
-    /**
-     * Scope for installments due this week.
-     */
-    public function scopeDueThisWeek($query)
-    {
-        return $query->whereBetween('due_date', [
-            now()->startOfWeek()->toDateString(),
-            now()->endOfWeek()->toDateString()
-        ]);
-    }
-
-    /**
-     * Scope for customer-specific installments.
-     */
-    public function scopeForCustomer($query, int $customerId)
-    {
-        return $query->where('customer_id', $customerId);
-    }
-
-    /**
-     * Relations
-     */
-
+    // ── Relations ────────────────────────────────────────────────
     public function saleInvoice(): BelongsTo
     {
         return $this->belongsTo(SaleInvoice::class);
@@ -96,8 +60,52 @@ class Installment extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function creator(): BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // ── Scopes ───────────────────────────────────────────────────
+    public function scopeUnpaid($query)
+    {
+        return $query->where('status', self::STATUS_NOT_PAID);
+    }
+
+    public function scopeOverdue($query)
+    {
+        return $query->unpaid()->where('collect_date', '<', now()->toDateString());
+    }
+
+    public function scopeForCustomer($query, int $customerId)
+    {
+        return $query->where('customer_id', $customerId);
+    }
+
+    public function scopeDueBetween($query, string $from, string $to)
+    {
+        return $query->whereBetween('collect_date', [$from, $to]);
+    }
+
+    // ── Accessors ────────────────────────────────────────────────
+    /**
+     * Is this installment past its due date and still unpaid?
+     */
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->status === self::STATUS_NOT_PAID 
+            && $this->collect_date->isPast() 
+            && !$this->collect_date->isToday();
+    }
+
+    /**
+     * Number of days overdue.
+     */
+    public function getDaysOverdueAttribute(): int
+    {
+        if (!$this->is_overdue) {
+            return 0;
+        }
+
+        return (int) $this->collect_date->diffInDays(now());
     }
 }

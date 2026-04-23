@@ -2,36 +2,31 @@
 
 namespace Database\Seeders;
 
-use App\Overrides\Spatie\Permission;
-use App\Overrides\Spatie\Role;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class InstallmentPermissionsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // 1. Spatie Permissions
         $permissions = [
             'installment.view',
             'installment.create',
-            'installment.edit',
             'installment.collect',
+            'installment.delete',
+            'installment.view_overdue',
         ];
 
-        foreach ($permissions as $permissionName) {
-            Permission::updateOrCreate(
-                ['name' => $permissionName, 'guard_name' => 'web'],
-                ['name' => $permissionName, 'guard_name' => 'web']
+        foreach ($permissions as $perm) {
+            Permission::firstOrCreate(
+                ['name' => $perm, 'guard_name' => 'web']
             );
         }
 
-        // 2. Assign to super-admin role
-        $superAdminRole = Role::where('name', 'super-admin')->first();
-        if ($superAdminRole) {
-            $superAdminRole->givePermissionTo($permissions);
-        }
+        Role::where('name', 'super-admin')->first()
+            ?->givePermissionTo($permissions);
+
+        $this->command->info('✅ Installment permissions seeded.');
     }
 }
